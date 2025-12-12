@@ -46,15 +46,6 @@ export default function Products({ addToCart }) {
     }
   };
 
-  // Buscar productos cuando cambia el término de búsqueda
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      handleSearch();
-    } else {
-      loadProducts();
-    }
-  }, [searchTerm, handleSearch]);
-
   const handleSearch = useCallback(async () => {
     try {
       setLoading(true);
@@ -83,6 +74,15 @@ export default function Products({ addToCart }) {
       setLoading(false);
     }
   }, [searchTerm]);
+
+  // Buscar productos cuando cambia el término de búsqueda
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      handleSearch();
+    } else {
+      loadProducts();
+    }
+  }, [searchTerm, handleSearch]);
 
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'todos' || product.category === selectedCategory;

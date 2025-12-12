@@ -13,12 +13,14 @@ Route::prefix('auth')->group(function (){
     Route::post('register',[GatewayController::class,'register']);
 });
 
-Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
-    
-    // Productos (públicos)
+// Rutas públicas v1
+Route::prefix('v1')->group(function () {
     Route::get('/products/available', [GatewayController::class, 'getAvailableProducts']);
     Route::get('/products/search', [GatewayController::class, 'searchProducts']);
     Route::get('/categories', [GatewayController::class, 'getCategories']);
+});
+
+Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
     
     // Órdenes (clientes)
     Route::get('/orders', [GatewayController::class, 'getOrders']);
@@ -28,5 +30,15 @@ Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
     
     // Auth
     Route::get('/auth/me', [GatewayController::class, 'getProfile']);
-    Route::post('/auth/logout', [GatewayController::class, 'logout']);
+    Route::get('/orders-by-status/{status}', [GatewayController::class, 'getOrdersByStatus']);
+
+    // ===================================================================
+    //  RUTAS DE APERTURA DE CAJA
+    // ===================================================================
+    Route::prefix('caja')->group(function () {
+        Route::get('/verificar-estado', [GatewayController::class, 'verificarEstadoApertura']);
+        Route::post('/abrir', [GatewayController::class, 'abrirCaja']);
+        Route::get('/estado-actual', [GatewayController::class, 'getEstadoActualApertura']);
+    });
+
 });
