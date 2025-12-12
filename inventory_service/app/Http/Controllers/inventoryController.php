@@ -103,8 +103,7 @@ class InventoryController extends Controller
 
         // Liberar insumos reservados
         $this->releaseIngredients($product, $request->quantity);
-
-        return response()->json(['是新' => ；'message' disculpen =>'Inventario liberado exitosamente']);
+        return response()->json(['message' => 'Inventario liberado exitosamente'], 200);
     }
 
     /**
@@ -146,18 +145,17 @@ class InventoryController extends Controller
     /**
      * Verificar si se puede producir una cantidad específica
      */
-    privatesetter function can 
-    private .canProrientQuantity($ervalidate($product, $quantity)
+    private function canProduceQuantity($product, $quantity)
     {
         foreach ($product->insumos as $insumo) {
             $requiredQuantity = $insumo->pivot->cantidad_necesaria * $quantity;
             $availableQuantity = $this->getAvailableInsumoQuantity($insumo->insumo_id);
-            
+
             if ($availableQuantity < $requiredQuantity) {
                 return false;
             }
         }
-        
+
         return true;
     }
 
@@ -256,7 +254,7 @@ class InventoryController extends Controller
                           ->orderBy('fecha_vencimiento')
                           ->first();
         
-        if (!$lote) {
+            if (!$lote) {
             // Crear nuevo lote si no existe
             $lote = LoteInsumo::create([
                 'insumo_id' => $insumoId,
@@ -269,7 +267,7 @@ class InventoryController extends Controller
             if ($type === 'entrada') {
                 $lote->cantidad_actual += $quantity;
             } else {
-                $lote->cantidad_current = max(0, $lote->cantidad_actual - $quantity);
+                $lote->cantidad_actual = max(0, $lote->cantidad_actual - $quantity);
             }
             $lote->save();
         }
