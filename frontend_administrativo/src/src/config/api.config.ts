@@ -33,7 +33,7 @@ export const API_CONFIG = {
    * 🔌 URL Base del Backend
    * Se obtiene de variable de entorno o usa default
    */
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8016/api',
 
   /**
    * ⏱️ Timeout de peticiones (ms)

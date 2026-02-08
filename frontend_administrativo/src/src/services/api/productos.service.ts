@@ -10,6 +10,7 @@ import type { Producto, Categoria } from '../../types/inventario.types';
 
 // Tipos para API (backend)
 export interface ProductoAPI {
+  producto_id?: number;
   id?: number;
   categoria_id: number;
   nombre_producto: string;
@@ -52,7 +53,7 @@ export interface CategoriasResponse {
 
 // Helper para convertir de API a formato local
 const convertFromAPI = (apiProducto: ProductoAPI): Producto => ({
-  id: apiProducto.id || Date.now(),
+  id: apiProducto.producto_id || apiProducto.id || Date.now(),
   nombre: apiProducto.nombre_producto,
   categoria: apiProducto.categoria?.nombre_categoria || 'Sin categoría',
   tipo_producto: apiProducto.tipo_producto === 'donut' ? 'Preparado' : 'No Preparado',
@@ -101,20 +102,13 @@ class ProductosService {
     } : undefined;
 
     try {
-      const url = buildURL('/v1/products/available', apiParams);
-      const headers = {
-        ...API_CONFIG.defaultHeaders
-      };
-      
-      // Solo agregar token si existe
-      const token = this.getAuthToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
+      const url = buildURL('/v1/products', apiParams);
       const response = await fetch(url, {
         method: 'GET',
-        headers
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
       });
 
       if (!response.ok) {
@@ -295,8 +289,8 @@ class ProductosService {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          ...API_CONFIG.defaultHeaders,
-          'Authorization': `Bearer ${this.getAuthToken()}`
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
         }
       });
 
