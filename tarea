@@ -1,0 +1,315 @@
+Acta de Constitución del Proyecto.
+Título del Proyecto: Happy Donuts Software
+Equipo de Desarrollo:
+Homeritos
+Versión:
+1.0
+Cliente / Organización:
+Happy Donut
+Fecha de Creación:
+[05/09/2025]
+
+1. Propósito y Justificación del Proyecto
+Problema u Oportunidad: 
+Actualmente, la cafetería administra de forma manual el control de su almacén, las entradas y salidas de productos, así como el registro de ventas y caja diaria. Este método ocasiona desorganización, errores humanos en el conteo de inventario, falta de control sobre los gastos y dificultades para conciliar el dinero al final del día. La ausencia de reportes claros limita la capacidad de la dueña para poder tomar decisiones informadas y poder mejorar en los diferentes aspectos del negocio.
+
+Duplicidad de registros (boleta + cuaderno).
+Riesgo de errores humanos al calcular ventas, inventario y vueltos.
+Pérdida de tiempo en revisiones diarias por parte de la propietaria.
+Dificultad para controlar ingresos y egresos.
+Falta de reportes que permitan analizar los productos más vendidos.
+Problemas con el control de stock de insumos (harina, azúcar, vasos, café, etc.).
+Dificultad para administrar promociones y clientes frecuentes.
+Limitación en el uso de canales digitales para pedidos en línea.
+
+Justificación de la Solución:
+
+La gestión actual de la tienda Happy Donut se realiza de manera manual y descentralizada, utilizando planillas de cálculo físicas y digitales. Esto genera ineficiencias críticas: Inventario impreciso: No hay sincronización en tiempo real entre las ventas, las compras y el stock, leading to desabastecimiento o exceso de mercancía. Pérdida de ventas: La tienda física no tiene una presencia en línea, lo que limita su reach y potencial de ingresos. Procesos lentos y propensos a errores: La administración de caja, el registro manual de operaciones y la reconciliación de pagos consumen hasta un 60% del tiempo operacional. Falta de datos centralizados: La toma de decisiones se basa en intuición y no en datos confiables y consolidados sobre bestsellers, ganancias o tendencias de clientes.
+Automatizar el registro de ventas y calcular automáticamente el vuelto.
+Actualizar el inventario en tiempo real cada vez que se registre una venta.
+Emitir reportes de ventas e inventario en pantalla, PDF o Excel.
+Gestionar promociones y descuentos para atraer más clientes.
+Registrar clientes frecuentes con sus datos de contacto y pedidos usuales.
+Habilitar una página web para mostrar productos, recibir pedidos en línea y aceptar diferentes métodos de pago (ejemplo: efectivo, Yape, Plin).
+Reducir la carga de trabajo de la propietaria, optimizando el control financiero y contable.
+Facilitar el cumplimiento tributario con reportes que se alineen al régimen RUS (ventas y compras declaradas a SUNAT).
+
+2. Objetivos Medibles y Criterios de Éxito
+
+Objetivo Específico del Proyecto
+Criterio de Éxito (Métrica para medir el logro)
+1.Automatizar el registro de ventas y caja diaria.
+El 100% de las transacciones registradas en el sistema calculan automáticamente el vuelto, evitando errores humanos.
+2. Implementar la actualización automática del inventario.
+Cada venta reduce en tiempo real el stock de productos e insumos; el sistema emite alertas cuando un insumo llega al nivel mínimo establecido.
+3. Generar reportes de ventas y de inventario en diferentes formatos.
+El sistema permite visualizar reportes en pantalla y exportarlos en PDF o Excel en menos de 30 segundos.
+4. Registrar y gestionar información de clientes
+Se almacena al menos el 90% de los datos de contacto de clientes recurrentes (nombre, teléfono, dirección, pedidos frecuentes).
+5. Implementar la gestión de promociones y descuentos.
+El administrador puede crear, editar o eliminar promociones en menos de 3 minutos desde el panel de control.
+6. Desarrollar una página web para mostrar productos y permitir pedidos en línea.
+Al menos el 80% de los pedidos registrados por clientes en línea se reciben correctamente en el panel de administración en tiempo real.
+7. Habilitar múltiples métodos de pago (efectivo, Yape, Plin).
+El sistema acepta y registra pagos con al menos tres métodos distintos sin errores de conciliación.
+8. Facilitar el cumplimiento tributario bajo el régimen RUS.
+El sistema genera un reporte mensual de ventas y compras compatible con los requerimientos de SUNAT, reduciendo en un 70% el tiempo que la propietaria dedica al cálculo manual.
+
+
+3. Requisitos de Alto Nivel
+Gestión de ventas y caja diaria 
+Registrar cada venta en el sistema de forma automática. 
+Calcular de manera inmediata el vuelto a entregar al cliente. 
+Permitir registrar diferentes métodos de pago (efectivo, Yape, Plin). 
+Gestión de inventario de productos e insumos 
+Actualizar el stock en tiempo real cada vez que se registre una venta. 
+Emitir alertas automáticas cuando un insumo llegue al nivel mínimo. 
+Registrar entradas y salidas de insumos de forma manual y automática. 
+Reportes administrativos y financieros 
+Generar reportes de ventas por producto, por día, semana y mes. 
+Exportar reportes en pantalla, PDF o Excel. 
+Producir reportes compatibles con los requerimientos de SUNAT (ventas y compras para régimen RUS). 
+Gestión de clientes 
+Registrar datos de clientes frecuentes (nombre, teléfono, dirección, pedidos usuales). 
+Facilitar la búsqueda de clientes para pedidos recurrentes. 
+Permitir ofrecer promociones personalizadas a clientes frecuentes. 
+Promociones y descuentos 
+Crear, editar y eliminar promociones desde el panel de administración. 
+Aplicar automáticamente cupones o descuentos al realizar compras. 
+Página web informativa y de pedidos 
+Mostrar menú de productos, precios, horarios y ubicación de la tienda. 
+Permitir a los clientes realizar pedidos en línea con carrito de compras. 
+Registrar pedidos en el panel de administración en tiempo real. 
+Permitir definir costos de delivery de acuerdo a la distancia. 
+Panel de administración 
+Permitir acceso diferenciado según el rol (propietario con control total, empleados con funciones limitadas). 
+Gestionar pedidos en tiempo real (tienda física y pedidos web). 
+Administrar inventario, promociones, ventas y reportes.
+
+
+
+
+
+
+
+
+
+4. Descripción y Límites del Proyecto (Alcance)
+
+Descripción General: 
+
+El proyecto consiste en el desarrollo de un sistema de software integral para la cafetería Happy Donut, que permitirá digitalizar y optimizar los procesos administrativos y comerciales de la empresa. El sistema estará compuesto por un módulo de gestión de ventas, inventario, clientes frecuentes, promociones y reportes; además, incluirá una página web que mostrará los productos y permitirá a los clientes realizar pedidos en línea con diferentes métodos de pago.
+El propósito principal es reducir la carga operativa de la propietaria, mejorar la exactitud en el control de ingresos y stock, ofrecer información confiable para la toma de decisiones y habilitar un canal de ventas digital que fortalezca la competitividad del negocio.
+
+Entregables Principales:
+
+Código fuente del sistema alojado en un repositorio Git.
+Módulo de ventas y caja con cálculo automático de vuelto.
+Módulo de inventario con actualización en tiempo real y alertas de stock mínimo.
+Módulo de reportes (ventas, insumos, RUS-SUNAT) exportables en PDF y Excel.
+Módulo de promociones y cupones de descuento.
+Gestión de clientes frecuentes con registro de datos y pedidos recurrentes.
+Página web informativa y de pedidos en línea con carrito de compras.
+Panel de administración con roles diferenciados (propietario y empleados).
+Manual de usuario básico en formato digital (PDF).
+Presentación final del sistema funcional.
+
+Fuera del Alcance (Límites): 
+No se desarrollará aplicación móvil nativa para Android o iOS (la web será accesible desde dispositivos móviles).
+No se incluirá integración con pasarelas de pago con tarjetas de crédito/débito en esta primera versión.
+No se realizará la migración de datos históricos (el sistema iniciará con datos nuevos).
+No se desarrollará un sistema de contabilidad completa, solo reportes básicos adaptados al régimen RUS.
+No se contempla la implementación de sistemas de delivery propios (solo se registrará el costo del envío en la venta).
+
+
+
+
+
+5. Riesgos Iniciales Identificados
+
+Riesgo Potencial
+Probabilidad (Baja/Media/Alta)
+Impacto (Bajo/Medio/Alto)
+Comentario / Justificación
+Cambios constantes en los requisitos del cliente
+Media
+Alta
+El cliente puede solicitar nuevas funciones durante el desarrollo, lo que afectaría el cronograma y el alcance.
+Disponibilidad limitada de la propietaria para reuniones y validaciones
+Media
+Alta
+La dueña administra directamente la tienda, lo que puede retrasar la retroalimentación y aprobación de avances.
+Dificultades técnicas en la integración de pedidos en línea y actualización de inventario en tiempo real
+Media
+Alta
+La sincronización de pedidos con el inventario es crítica; un error podría afectar la operación del negocio.
+Resistencia del personal al cambio tecnológico
+Media
+Media
+Los trabajadores están acostumbrados a registros manuales; puede haber una curva de aprendizaje.
+Limitaciones presupuestarias para infraestructura o mantenimiento
+Baja
+Media
+Si el cliente no dispone de recursos para hosting, equipos o soporte, el sistema podría tener interrupciones.
+Problemas de conectividad a internet en la tienda
+Media
+Media
+La página web y la sincronización de datos dependen de conexión estable; una falla afectaría los pedidos en línea.
+Riesgos de seguridad en datos de clientes y transacciones
+Baja
+Alta
+La información de clientes y pagos debe protegerse para evitar fugas de datos o fraudes.
+
+
+6. Cronograma de Hitos Principales
+
+
+Hito
+Fecha estimada
+Descripción
+Aprobación del Acta de Constitución
+Semana 2
+Validación formal del documento por el docente y aceptación del cliente.
+Finalización de la planificación del proyecto
+Semana 9
+Definición de alcance, cronograma detallado, asignación de roles y plan de calidad.
+Entrega del MVP (Producto Mínimo Viable) funcional
+Semana 15
+Versión preliminar del sistema con módulos básicos: registro de ventas, inventario automático y reportes iniciales.
+Presentación final del proyecto
+Semana 16 o 17
+Entrega del sistema completo con página web, promociones, gestión de clientes y manual de usuario.
+
+
+
+
+7. Equipo del Proyecto y Roles Principales
+
+Nombre del Estudiante
+Rol(es) en el Proyecto
+Hassan Aramis Claros Flores
+Líder de Proyecto, Analista de Negocio
+Royfrankly Anthony Navarro Quenta
+Arquitecto de Software, desarrollador
+Jhon Sebastian Mamani Ancco
+tester, Desarrollador Backend
+Alexander Joel Ccoapaza Quispe
+Diseñador de Software, Desarrollador
+
+
+Carlos Leonel Acero Copaja
+Desarrollador Backend
+Jhon Alexander Arocutipa Quispe
+Desarrollador  Frontend
+
+
+
+8. Autorización del Proyecto
+El presente documento autoriza formalmente el inicio del proyecto “Happy Donut Software” y otorga al equipo de desarrollo la autoridad para utilizar los recursos asignados para la consecución de los objetivos aquí descritos.
+Aprobado por:
+Manuel Yuri Apaza Valencia
+Patrocinador Académico
+
+
+
+Firma: ________________________ Fecha: 09/09/2025
+Kelly Jesús Flores Tarqui
+Cliente
+Firma:  Fecha: 09/09/2025
+
+Hassan Aramis Claros Flores
+Jefe de Proyecto
+Firma:  Fecha: 09/09/2025
+Referencia del Estándar Base (Formato APA 7)
+Project Management Institute. (2021). A guide to the project management body of knowledge (PMBOK® guide) (7th ed.). Project Management Institute.
+
+
+
+
+
+--------------------tarea-----------------------------
+registro de hallazgos:
+
+
+
+nombre técnico(código)
+
+Comparación de funcionalidades:
+- Requisito: automatizar registro de ventas y cálculo de vuelto.
+  - En el código se usa el tipo `Comprobante` en `frontend-administrativo/src/src/types/ventas.types.ts`.
+  - El comprobante incluye `metodoPago` (`efectivo`, `yape`, `plin`), `subtotal`, `total`, cliente, usuario y `estado`.
+  - El módulo de caja (`frontend-administrativo/src/src/types/caja.types.ts`) gestiona apertura, movimientos, cierres y diferencias por efectivo, Yape y Plin.
+- Requisito: actualizar inventario en tiempo real.
+  - El código tiene `Producto` con `stock`, `Insumo` con `cantidad` y notas de entrada/salida en `frontend-administrativo/src/src/types/inventario.types.ts`.
+  - Esto permite manejar el stock de productos e insumos, ajustes manuales y salidas por venta o uso interno.
+- Requisito: generar reportes administrativos.
+  - El sistema guarda datos estructurados de caja, comprobantes, inventario y clientes, lo que facilita reportes en pantalla.
+  - No se encontró un módulo explícito de exportación a PDF/Excel en el código visible, pero la información ya está disponible en los registros.
+- Requisito: gestionar promociones y descuentos.
+  - `frontend-administrativo/src/src/types/promociones.types.ts` define promociones con productos, precio y estado activo.
+  - Los servicios de almacenamiento local apoyan el CRUD de promociones y la selección de promociones activas.
+- Requisito: registrar clientes frecuentes.
+  - `frontend-administrativo/src/src/types/clientes.types.ts` define `ClienteProveedor` con datos de contacto, documento, dirección, teléfono y estado.
+  - Esto cumple el requisito de almacenar clientes frecuentes y sus datos para uso en venta y búsqueda.
+- Requisito: mostrar productos y recibir pedidos en línea.
+  - La arquitectura incluye endpoints públicos para productos disponibles, categorías y promociones activas.
+  - El dominio `frontend-clientes` funciona como catálogo y punto de pedido para clientes.
+- Requisito: aceptar múltiples métodos de pago.
+  - El tipo `MetodoPago` en el código solo permite `efectivo`, `yape` y `plin`, lo que coincide con el requisito.
+- Requisito: cumplimiento RUS/SUNAT.
+  - En `frontend-administrativo/src/src/config/app.config.ts` el régimen está definido como `RUS`, `tieneIGV: false` y la boleta es el comprobante principal.
+  - Esto muestra que el sistema está alineado con la lógica de ventas del régimen RUS.
+
+| Nombre técnico (código) | Nombre del dominio (negocio) |
+| --- | --- |
+| `Product Service` | Gestión de catálogo, productos, categorías y promociones |
+| `Inventory Service` | Control de stock, insumos, notas de entrada y salida |
+| `Order Service` | Gestión de ventas, órdenes y comprobantes |
+| `API Gateway` | Enrutamiento y seguridad de acceso a servicios |
+| `Auth Service` | Gestión de usuarios y permisos |
+| `Email Service` | Envío de notificaciones por correo |
+| `frontend-administrativo` | Plataforma interna de ventas, caja, inventario, clientes y promociones |
+| `frontend-clientes` | Plataforma para catálogo y pedidos en línea |
+
+Funciones y tecnologías por nivel:
+
+- Backend / Microservicios:
+  - `order_service`: administra ventas, comprobantes, estados de venta y detalles de pedidos.
+  - `inventory_service`: gestiona productos, insumos, notas de entrada y salida, ajuste de stock y validación de disponibilidad.
+  - `product_service`: controla el catálogo de productos, categorías y promociones activas.
+  - `auth_service`: maneja autenticación de usuarios, roles y permisos para acceso diferenciado de propietario/empleado.
+  - `email_service`: gestiona las notificaciones por correo, soporte de comunicaciones con el cliente o el equipo.
+  - Tecnologías principales: PHP 8.2, Laravel 12, Composer, rutas REST y middleware de autenticación.
+
+- Frontend Administrativo:
+  - `frontend-administrativo`: interfaz de gestión interna para caja, ventas, inventario, promociones, clientes y reportes.
+  - Funcionalidades: crear comprobantes, abrir/cerrar caja, registrar movimientos, administrar stock, gestionar promociones y clientes recurrentes.
+  - Tecnologías principales: React, TypeScript, Vite, Tailwind CSS, Radix UI, almacenamiento local (`localStorage`) y servicios `frontend-administrativo/src/src/services`.
+
+- Frontend Cliente:
+  - `frontend-clientes`: interfaz pública para mostrar productos, categorías y recibir pedidos en línea.
+  - Funcionalidades: catálogo de productos, búsqueda, selección de productos y creación de pedidos desde el cliente.
+  - Tecnologías principales: React, Create React App, React Router, Tailwind CSS y componentes visuales con `lucide-react`.
+
+- API / Gateway:
+  - `apigateway`: capa de integración que expone endpoints `/api/v1/...` para productos, categorías, promociones y ventas.
+  - Funcionalidades: enrutamiento, autenticación, control de acceso, y publicación de datos para los frontends.
+  - Tecnologías principales: Laravel + Inertia, Vite, TypeScript, ESLint, Prettier, Tailwind CSS y rutas API protegidas.
+
+- Funciones claves del sistema:
+  - Captura automática de ventas y métodos de pago (`efectivo`, `Yape`, `Plin`).
+  - Control de caja con seguimiento de ingresos, egresos y diferencias por método.
+  - Actualización de inventario en cada movimiento de productos o insumos.
+  - Gestión de promociones activas y descuentos aplicables en ventas.
+  - Registro de clientes frecuentes y búsqueda de datos para pedidos recurrentes.
+  - Soporte para el régimen RUS: boletas, no IGV y configuraciones de comprobantes.
+
+
+
+
+
+
+
+
+
+
