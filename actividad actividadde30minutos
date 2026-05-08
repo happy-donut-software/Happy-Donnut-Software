@@ -1,0 +1,285 @@
+Persona 1:
+- Código: `ProcesarVentaUseCase` ejecuta la venta.
+- Ejemplo completo:
+  ```php
+  interface ForCalculatingSaleTotal {
+      public function calculateTotal(array $saleData): float;
+  }
+
+  interface ForSavingSale {
+      public function save(array $saleData, float $total): void;
+  }
+
+  class SaleTotalCalculator implements ForCalculatingSaleTotal {
+      private ForSavingSale $saleRepository;
+
+      public function __construct(ForSavingSale $saleRepository)
+      {
+          $this->saleRepository = $saleRepository;
+      }
+
+      public function calculateTotal(array $saleData): float
+      {
+          $total = $saleData['subtotal'] ?? 0.0;
+          if (!empty($saleData['discount'])) {
+              $total -= $total * $saleData['discount'];
+          }
+
+          $this->saleRepository->save($saleData, $total);
+          return $total;
+      }
+  }
+
+  class EloquentSaleRepository implements ForSavingSale {
+      public function save(array $saleData, float $total): void
+      {
+          Venta::create([
+              'cliente_id' => $saleData['cliente_id'],
+              'total_venta' => $total,
+              'estado_pedido' => 'pendiente',
+          ]);
+      }
+  }
+
+  class Main {
+      public static function main(): void
+      {
+          $repo = new EloquentSaleRepository();
+          $service = new SaleTotalCalculator($repo);
+
+          $saleData = ['cliente_id' => 1, 'subtotal' => 120.0, 'discount' => 0.10];
+          $total = $service->calculateTotal($saleData);
+          echo "Total calculado: $total";
+      }
+  }
+  ```
+- Puertos: `ForCalculatingSaleTotal`, `ForSavingSale`.
+- Adaptador: `EloquentSaleRepository` persiste la venta.
+- Clase base: `Venta` del dominio con `registrarPago(dineroRecibido)`.
+- Inyección: constructor inyecta `ForSavingSale` en `SaleTotalCalculator`.
+- Llamada:
+  `new SaleTotalCalculator($repo)->calculateTotal($saleData);`
+
+Persona 2:
+- Código: `DescontarStockFIFOUseCase` consume stock FIFO.
+- Ejemplo completo:
+  ```php
+  interface ForInventoryRepository {
+      public function getIngredientWithActiveBatches(int $insumoId): Insumo;
+      public function saveBatches(array $batches): void;
+  }
+
+  class FIFOStockConsumer {
+      private ForInventoryRepository $repository;
+
+      public function __construct(ForInventoryRepository $repository)
+      {
+          $this->repository = $repository;
+      }
+
+      public function execute(int $insumoId, float $quantity): void
+      {
+          $insumo = $this->repository->getIngredientWithActiveBatches($insumoId);
+          $insumo->consumirStock($quantity);
+          $this->repository->saveBatches($insumo->lotes());
+      }
+  }
+
+  class EloquentInventoryRepository implements ForInventoryRepository {
+      public function getIngredientWithActiveBatches(int $insumoId): Insumo
+      {
+          $model = InsumoModel::with('lotes')->findOrFail($insumoId);
+          $lotes = array_map(fn($lot) => $this->mapLote($lot), $model->lotes->all());
+          return new Insumo($model->id, $model->nombre, $model->unidad, $lotes);
+      }
+
+      public function saveBatches(array $batches): void
+      {
+          foreach ($batches as $lote) {
+              LoteInsumo::where('lote_id', $lote->id())->update(['cantidad_restante' => $lote->cantidadRestante()]);
+          }
+      }
+
+      private function mapLote($lotModel): Lote
+      {
+          return new Lote(
+              $lotModel->lote_id,
+              (float) $lotModel->cantidad_restante,
+              new DateTimeImmutable($lotModel->fecha_caducidad)
+          );
+      }
+  }
+
+  class Main {
+      public static function main(): void
+      {
+          $repo = new EloquentInventoryRepository();
+          $service = new FIFOStockConsumer($repo);
+
+          $service->execute(5, 12.0);
+          echo "Stock descontado FIFO correctamente.";
+      }
+  }
+  ```
+- Puertos: `ForInventoryRepository`.
+- Adaptador: `EloquentInventoryRepository` carga `Insumo` y traduce `LoteInsumo` a `Lote` de dominio.
+- Clase base: `Insumo` con `consumirStock(cantidad)` y `lotes()`.
+- Inyección: `FIFOStockConsumer` recibe la interfaz por constructor.
+- Llamada:
+  `new FIFOStockConsumer($repo)->execute($insumoId, $cantidad);`
+
+Persona 3:
+- Código: `Venta::registrarPago()` calcula `vueltoAEntregar`.
+- Ejemplo completo:
+  ```php
+  interface ForSalesRepository {
+      public function nextCorrelative(): string;
+      public function saveSale(Venta $venta): void;
+  }
+
+  interface ForPrinter {
+      public function print(Venta $venta): void;
+  }
+
+  class SalePaymentProcessor {
+      private ForSalesRepository $salesRepository;
+      private ForPrinter $printer;
+
+      public function __construct(ForSalesRepository $salesRepository, ForPrinter $printer)
+      {
+          $this->salesRepository = $salesRepository;
+          $this->printer = $printer;
+      }
+
+      public function execute(array $saleData, DineroRecibido $payment): void
+      {
+          $correlative = $this->salesRepository->nextCorrelative();
+          $venta = new Venta($correlative, $saleData['total'], 'pendiente');
+          $venta->registrarPago($payment);
+          $this->salesRepository->saveSale($venta);
+          $this->printer->print($venta);
+      }
+  }
+
+  class EloquentSalesRepository implements ForSalesRepository {
+      public function nextCorrelative(): string
+      {
+          return VentaModel::max('correlativo') + 1;
+      }
+
+      public function saveSale(Venta $venta): void
+      {
+          $model = VentaModel::create([
+              'correlativo' => $venta->correlativo()->value(),
+              'total_venta' => $venta->totalAPagar()->value(),
+              'estado' => $venta->estado(),
+          ]);
+          Pago::create(['venta_id' => $model->id, 'monto' => $venta->dineroRecibido()->value()]);
+      }
+  }
+
+  class PrinterAdapter implements ForPrinter {
+      public function print(Venta $venta): void
+      {
+          $message = sprintf("Venta %s pagada, vuelto: %s", $venta->correlativo()->value(), $venta->vueltoAEntregar()->value());
+          Log::info($message);
+      }
+  }
+
+  class Main {
+      public static function main(): void
+      {
+          $repo = new EloquentSalesRepository();
+          $printer = new PrinterAdapter();
+          $processor = new SalePaymentProcessor($repo, $printer);
+
+          $processor->execute(['total' => 150.0], new DineroRecibido(200.0));
+      }
+  }
+  ```
+- Puertos: `ForSalesRepository`, `ForPrinter`.
+- Adaptador: `EloquentSalesRepository` persiste la entidad `Venta`; `PrinterAdapter` emite el recibo.
+- Clase base: `Venta` independiente de Eloquent y `ImpresoraAdapter` separado del dominio.
+- Inyección: `SalePaymentProcessor` recibe puertos por constructor.
+- Llamada:
+  `new SalePaymentProcessor($repo, $printer)->execute($saleData, $payment);`
+
+Persona 4:
+- Código: `EloquentInventarioRepository` construye `Insumo` y mapea `Lote`.
+- Ejemplo completo:
+  ```php
+  interface ForInventoryRepository {
+      public function getIngredientWithActiveBatches(int $insumoId): Insumo;
+      public function saveBatches(array $batches): void;
+  }
+
+  class EloquentInventoryRepository implements ForInventoryRepository {
+      public function getIngredientWithActiveBatches(int $insumoId): Insumo
+      {
+          $model = InsumoModel::with('lotes')->findOrFail($insumoId);
+          $lotes = array_map(fn($lot) => $this->mapLote($lot), $model->lotes->all());
+          return new Insumo($model->id, $model->nombre, $model->unidad, $lotes);
+      }
+
+      public function saveBatches(array $batches): void
+      {
+          foreach ($batches as $lote) {
+              LoteInsumo::where('lote_id', $lote->id())->update(['cantidad_restante' => $lote->cantidadRestante()]);
+          }
+      }
+
+      private function mapLote($lotModel): Lote
+      {
+          return new Lote(
+              $lotModel->lote_id,
+              (float) $lotModel->cantidad_restante,
+              new DateTimeImmutable($lotModel->fecha_caducidad)
+          );
+      }
+  }
+
+  class Main {
+      public static function main(): void
+      {
+          $repo = new EloquentInventoryRepository();
+          $insumo = $repo->getIngredientWithActiveBatches(3);
+          foreach ($insumo->lotes() as $lote) {
+              echo "Lote {$lote->id()} - restante: {$lote->cantidadRestante()}\n";
+          }
+      }
+  }
+  ```
+- Puertos: `ForInventoryRepository`.
+- Adaptador: `EloquentInventoryRepository` traduce `LoteInsumo` a `Lote` de dominio.
+- Clase base: `Lote` con `consumir()` y `esAgotado()`.
+- Inyección: un caso de uso o servicio solo conoce la interfaz, no Eloquent.
+- Llamada:
+  `inventarioRepository->saveBatches($lotes);`
+
+Persona 5:
+- Código: `AppServiceProvider` configura la inyección manual.
+- Ejemplo completo:
+  ```php
+  class AppServiceProvider extends ServiceProvider {
+      public function register(): void
+      {
+          $this->app->bind(VentaRepositoryInterface::class, EloquentSalesRepository::class);
+          $this->app->bind(ImpresoraPortInterface::class, PrinterAdapter::class);
+          $this->app->bind(InventarioRepositoryInterface::class, EloquentInventoryRepository::class);
+      }
+
+      public function boot(): void
+      {
+          $ventaRepo = $this->app->make(VentaRepositoryInterface::class);
+          $printer = $this->app->make(ImpresoraPortInterface::class);
+          $useCase = new ProcesarVentaUseCase($ventaRepo, $printer);
+          $useCase->execute(['cliente_id' => 1, 'total' => 100.0]);
+      }
+  }
+  ```
+- Puertos: `VentaRepositoryInterface`, `ImpresoraPortInterface`, `InventarioRepositoryInterface`.
+- Adaptador: `EloquentSalesRepository`, `PrinterAdapter`, `EloquentInventoryRepository`.
+- Clase base: `Venta`, `Insumo`, `Lote`.
+- Inyección: configurada en el proveedor de servicios para construir casos de uso con dependencias explícitas.
+- Llamada:
+  `new ProcesarVentaUseCase($ventaRepo, $printer)->execute($ventaData);`

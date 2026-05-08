@@ -10,6 +10,7 @@ final class Venta
     private ?VueltoAEntregar $vueltoAEntregar = null;
     private string $estadoPedido;
     private \DateTimeImmutable $fechaVenta;
+    private array $items = [];
 
     public function __construct(
         CorrelativoComprobante $correlativoComprobante,
@@ -20,6 +21,14 @@ final class Venta
         $this->totalAPagar = $totalAPagar;
         $this->estadoPedido = $estadoPedido;
         $this->fechaVenta = new \DateTimeImmutable();
+    }
+
+    public function agregarItem(VentaItem $item): void
+    {
+        $this->items[] = $item;
+        $this->totalAPagar = new TotalAPagar(
+            round($this->totalAPagar->value() + $item->subtotal(), 2)
+        );
     }
 
     public function registrarPago(DineroRecibido $dineroRecibido): void
@@ -64,6 +73,11 @@ final class Venta
         return $this->fechaVenta;
     }
 
+    public function items(): array
+    {
+        return $this->items;
+    }
+
     public function toArray(): array
     {
         return [
@@ -73,6 +87,7 @@ final class Venta
             'vuelto_a_entregar' => $this->vueltoAEntregar?->value(),
             'estado_pedido' => $this->estadoPedido,
             'fecha_venta' => $this->fechaVenta->format('Y-m-d H:i:s'),
+            'items' => array_map(fn(VentaItem $item) => $item->toArray(), $this->items),
         ];
     }
 }
