@@ -22,7 +22,7 @@ final class ClienteAggregate
             'apellido' => $apellido,
             'email' => $email,
             'telefono' => $telefono,
-        ]);
+        ]);+
 
         return new self($cliente);
     }

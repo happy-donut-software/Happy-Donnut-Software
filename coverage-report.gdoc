@@ -1,0 +1,6 @@
+{
+  "doc_id": "TODO_GENERAR",
+  "name": "coverage-report",
+  "mime_type": "application/vnd.google-apps.document",
+  "description": "Reporte de cobertura de pruebas. Generar y subir a Google Docs con evidencia de la cobertura del dominio."
+}
