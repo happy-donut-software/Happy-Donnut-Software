@@ -22,10 +22,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d auth_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "5440:5432"  # Puerto mapeado solo para acceso externo si es necesario
 
@@ -44,10 +45,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d product_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "5441:5432"
 
@@ -66,10 +68,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d inventory_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "5442:5432"
 
@@ -88,10 +91,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d order_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "5443:5432"
 
@@ -110,10 +114,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d email_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "5444:5432"
 
@@ -132,10 +137,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d apigateway_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     ports:
       - "5445:5432"
 
