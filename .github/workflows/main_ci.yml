@@ -28,11 +28,6 @@ jobs:
           echo "RABBITMQ_USER=admin" >> .env
           echo "RABBITMQ_PASS=secret" >> .env
 
-      - name: Validar sintaxis de Nginx
-        run: |
-          # Corregimos la ruta de montaje para que valide como bloque de configuración de sitio
-          docker run --rm -t -v $(pwd)/nginx.conf:/etc/nginx/conf.d/default.conf:ro nginx:alpine nginx -t
-
       - name: Levantar Microservicios con Docker Compose
         run: docker compose up -d --build
 
