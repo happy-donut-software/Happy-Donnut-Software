@@ -31,6 +31,12 @@ jobs:
       - name: Levantar Microservicios con Docker Compose
         run: docker compose up -d --build
 
+      - name: Mostrar Logs de Error (Si Docker falla)
+        if: failure()
+        run: |
+          echo "=== LOGS DE LAS BASES DE DATOS PARA DEBUGEAR ==="
+          docker compose logs db-auth db-product db-inventory db-order db-email db-apigateway
+
       - name: Esperar que los servicios estén listos (Healthcheck)
         run: |
           echo "Esperando estabilidad de los contenedores..."

@@ -26,7 +26,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     ports:
       - "5440:5432"  # Puerto mapeado solo para acceso externo si es necesario
 
@@ -49,7 +49,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     ports:
       - "5441:5432"
 
@@ -72,7 +72,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     ports:
       - "5442:5432"
 
@@ -95,7 +95,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     ports:
       - "5443:5432"
 
@@ -118,7 +118,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     ports:
       - "5444:5432"
 
@@ -141,7 +141,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
     ports:
       - "5445:5432"
 
