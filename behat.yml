@@ -1,0 +1,14 @@
+default:
+  suites:
+    default:
+      paths:    [ %paths.base%/features ]
+      contexts: [ FeatureContext ]
+  formatters:
+    progress: ~
+    html:
+      output_path: coverage/behat
+
+  extensions:
+    Behat\MinkExtension:
+      base_url: http://localhost:8000
+      browser_name: chrome
