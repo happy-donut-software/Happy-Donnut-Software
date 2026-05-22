@@ -1,0 +1,7 @@
+{
+    "require-dev": {
+        "behat/behat": "^3.31",
+        "friends-of-behat/mink-extension": "^2.7 || ^2.8",
+        "friends-of-behat/symfony-extension": "^2.6"
+    }
+}
