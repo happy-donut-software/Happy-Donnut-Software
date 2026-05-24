@@ -7,19 +7,33 @@
 ---
 
 ## 🛠️ Ramas Temporales (Se borran al terminar)
-*Usa minúsculas, guiones y lenguaje ubicuo: `tipo/modulo-accion-patron`*
+*Usa minúsculas, guiones y lenguaje ubicuo: `categoría/módulo-acción-descripción`*
 
-*   **`feature/`** ➔ Nuevas funciones o refactorización de arquitectura.
-    *   *Ejemplo DDD:* `feature/inventario-refactor-hexagonal`
+*   **`feature/`** ➔ Nuevas funciones o refactorizaciones de arquitectura.
+    *   *Estructura:* `feature/módulo-acción-descripción`
+    *   *Ejemplo:* `feature/inventario-agregar-impresion-de-boletas`
+    *   *Ejemplo:* `feature/inventario-agregar-alerta-de-stock`
+    *   *Flujo:* Nace de `develop` ➔ Muere en `develop`.
+
+*   **`bugfix/`** ➔ Arreglar un error encontrado durante la etapa de desarrollo.
+    *   *Estructura:* `bugfix/módulo-acción-descripción`
+    *   *Ejemplo:* `bugfix/inventario-corregir-calculo-stock`
     *   *Flujo:* Nace de `develop` ➔ Muere en `develop`.
 
 *   **`release/`** ➔ Congelar código para pruebas antes de una presentación o despliegue.
+    *   *Estructura:* `release/vVersión-motivo`
     *   *Ejemplo:* `release/v1.0.0-presentacion-mvp`
     *   *Flujo:* Nace de `develop` ➔ Muere en `main` y `develop`.
 
-*   **`hotfix/`** ➔ Errores críticos en vivo que detienen el negocio.
-    *   *Ejemplo:* `hotfix/pedido-caida-pasarela-pago`
+*   **`hotfix/`** ➔ Errores críticos en vivo que detienen o afectan el negocio.
+    *   *Estructura:* `hotfix/módulo-acción-descripción`
+    *   *Ejemplo:* `hotfix/pedido-reparar-caida-pasarela-pago`
     *   *Flujo:* Nace de `main` ➔ Muere en `main` y `develop`.
+
+*   **`docs/`** ➔ Cambios exclusivos en manuales, guías o documentación del proyecto.
+    *   *Estructura:* `docs/tema-acción-descripción`
+    *   *Ejemplo:* `docs/arquitectura-editar-categoria-de-pedidos`
+    *   *Flujo:* Nace de `develop` ➔ Muere en `develop`.
 
 ---
 
