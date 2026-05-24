@@ -1,21 +1,28 @@
-# Dependencias de Node.js
-node_modules/
-
-# Dependencias de PHP (Composer)
-vendor/
-
-# Archivos de entorno y secretos
-.env
-.env.*
-
-# Logs y archivos temporales
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Archivos de sistema/IDE
+/.phpunit.cache
+/bootstrap/ssr
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+/storage/*.key
+/storage/pail
+/vendor
 .DS_Store
-Thumbs.db
-.vscode/
-.idea/
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed

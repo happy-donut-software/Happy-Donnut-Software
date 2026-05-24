@@ -42,5 +42,15 @@ Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
     
     // Auth
     Route::get('/auth/me', [GatewayController::class, 'getProfile']);
-    Route::post('/auth/logout', [GatewayController::class, 'logout']);
+    Route::get('/orders-by-status/{status}', [GatewayController::class, 'getOrdersByStatus']);
+
+    // ===================================================================
+    //  RUTAS DE APERTURA DE CAJA
+    // ===================================================================
+    Route::prefix('caja')->group(function () {
+        Route::get('/verificar-estado', [GatewayController::class, 'verificarEstadoApertura']);
+        Route::post('/abrir', [GatewayController::class, 'abrirCaja']);
+        Route::get('/estado-actual', [GatewayController::class, 'getEstadoActualApertura']);
+    });
+
 });

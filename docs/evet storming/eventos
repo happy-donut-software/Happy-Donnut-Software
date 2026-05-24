@@ -1,0 +1,79 @@
+1. Recopilación de Eventos Actuales (Extraídos de tus avances)
+Aquí están todos los eventos (🟠) organizados por área temática. Se ha aplicado el cambio a Vuelto Calculado Automáticamente:
+Ventas Físicas (Point of Sale)
+- [ ] 🟠 Venta Iniciada
+- [ ] 🟠 Producto(s) Seleccionado(s) / Producto(s) Agregado(s)
+- [ ] 🟠 Promoción o Descuento Aplicado
+- [ ] 🟠 Total Mostrado
+- [ ] 🟠 Cliente Identificado
+- [ ] 🟠 Monto de Pago Recibido Ingresado
+- [ ] 🟠 Vuelto Calculado Automáticamente
+- [ ] 🟠 Pago Realizado
+- [ ] 🟠 Tipo de Comprobante Seleccionado
+- [ ] 🟠 Boleta Seleccionada
+- [ ] 🟠 Nota de Pedido Seleccionada
+- [ ] 🟠 Comprobante Guardado
+- [ ] 🟠 Venta Finalizada
+- [ ] 🟠 Producto(s) Entregado(s)
+Gestión de Inventario (Supply Chain)
+- [ ] 🟠 Inventario Inicial Contado
+- [ ] 🟠 Stock Inicial Validado
+- [ ] 🟠 Compra de Insumos Realizada
+- [ ] 🟠 Compra de Productos Realizada
+- [ ] 🟠 Stock Verificado
+- [ ] 🟠 Alerta de Insumo(s) Mínimo(s) Disparada
+- [ ] 🟠 Alerta de Producto(s) Mínimo(s) Disparada
+- [ ] 🟠 Ajuste de Stock por Error de Registro Realizado
+- [ ] 🟠 Stock Actualizado
+- [ ] 🟠 Reporte de Stock Generado
+- [ ] 🟠 Costo de Producto Actualizado
+Tienda Virtual (E-commerce Engine)
+- [ ] 🟠 Menú de Productos Consultado
+- [ ] 🟠 Producto Añadido al Carrito
+- [ ] 🟠 Carrito de Compras Confirmado
+- [ ] 🟠 Opción de Entrega Seleccionada
+- [ ] 🟠 Dirección de Entrega Ingresada
+- [ ] 🟠 Costo de Envío Calculado
+- [ ] 🟠 Alta Demanda Detectada
+- [ ] 🟠 Pedido Rechazado por Falta de Stock
+- [ ] 🟠 Método de Pago Online Seleccionado
+- [ ] 🟠 Pedido Online Enviado
+- [ ] 🟠 Pedido Recibido en Panel de Administración
+- [ ] 🟠 Pedido Marcado como "Listo para Recojo"
+- [ ] 🟠 Pedido Entregado a Domicilio
+- [ ] 🟠 Reseña de Producto Recibida
+Caja y Finanzas (Treasury)
+- [ ] 🟠 Sesión de Cajero Iniciada / Sesión de Cajero Finalizada
+- [ ] 🟠 Apertura de Caja Registrada / Monto Inicial de Caja Registrado
+- [ ] 🟠 Ingresos y Egresos Totales Calculados
+- [ ] 🟠 Egreso de Efectivo por Compras de Insumos Asentado
+- [ ] 🟠 Límite Mensual del RUS Monitoreado
+- [ ] 🟠 Alerta de Proximidad al Tope del RUS Emitida
+- [ ] 🟠 Venta Acumulada en Reporte Oficial (RUS)
+- [ ] 🟠 Diferencia de Caja Detectada
+- [ ] 🟠 Arqueo de Caja Finalizado / Caja Diaria Cerrada
+- [ ] 🟠 Resumen de Utilidad Mensual Calculado
+Clientes y Reportes (Customer & Identity)
+- [ ] 🟠 Cliente Frecuente Registrado
+- [ ] 🟠 Datos de Contacto Actualizado
+- [ ] 🟠 Pedido Recurrente Identificado
+- [ ] 🟠 Historial de Pedidos Consultado
+- [ ] 🟠 Promoción Creada / Editada / Eliminada / Desactivada
+- [ ] 🟠 Vigencia de Promoción Expirada
+- [ ] 🟠 Cupón de Descuento Generado / Validado
+- [ ] 🟠 Recomendación de Cliente Registrada
+- [ ] 🟠 Beneficio por Fidelidad Otorgado
+- [ ] 🟠 Comprobantes Exportados (PDF/EXCEL)
+- [ ] 🟠 Reporte de Ventas para SUNAT Generado
+Eventos Modificados (para reemplazar los anteriores):
+- [ ] 🟠 Vuelto Calculado Automáticamente
+- [ ] 🟠 Alerta de Reabastecimiento Emitida
+Eventos Completamente Nuevos:
+- [ ] 🟠 Turno de Caja Iniciado
+- [ ] 🟠 Turno de Caja Finalizado
+- [ ] 🟠 Pago Digital Conciliado
+- [ ] 🟠 Promoción Online Rechazada en POS
+- [ ] 🟠 Boleta Omitida por Límite RUS
+- [ ] 🟠 Venta Excluida de Impresión Masiva
+- [ ] 🟠 Stock Descontado Automáticamente
+- [ ] 🟠 Identidad de Cliente Frecuente Verificada

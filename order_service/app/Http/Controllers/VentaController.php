@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Core\Application\UseCases\ProcesarVentaUseCase;
 use App\Models\Venta;
 use App\Models\DetalleVenta;
 use App\Models\Pago;
@@ -10,6 +11,9 @@ use App\Models\MetodoPago;
 
 class VentaController extends Controller
 {
+    public function __construct(private readonly ProcesarVentaUseCase $procesarVentaUseCase)
+    {
+    }
     /**
      * Listar todas las ventas (para admin)
      */
@@ -29,38 +33,23 @@ class VentaController extends Controller
     {
         $request->validate([
             'cliente_id' => 'required|integer',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric|min:0',
-            'payment_method' => 'required|string'
+            'total_apagar' => 'required|numeric|min:0',
+            'dinero_recibido' => 'required|numeric|min:0',
+            'metodo_pago_id' => 'required|integer',
         ]);
 
-        $total = collect($request->items)->sum(function($item) {
-            return $item['price'] * $item['quantity'];
-        });
-
-        $venta = Venta::create([
+        $venta = $this->procesarVentaUseCase->execute([
             'cliente_id' => $request->cliente_id,
             'empleado_id' => $request->user()->id ?? 1,
-            'total_venta' => $total,
+            'total_apagar' => $request->total_apagar,
+            'dinero_recibido' => $request->dinero_recibido,
+            'metodo_pago_id' => $request->metodo_pago_id,
             'estado_pedido' => 'pendiente',
-            'fecha_venta' => now()
         ]);
 
-        foreach ($request->items as $item) {
-            DetalleVenta::create([
-                'venta_id' => $venta->venta_id,
-                'producto_id' => $item['product_id'],
-                'nombre_producto' => $item['name'] ?? 'Producto',
-                'precio_unitario_venta' => $item['price'],
-                'cantidad' => $item['quantity']
-            ]);
-        }
-
         return response()->json([
-            'message' => 'Venta creada exitosamente',
-            'venta' => $venta->load('detalles')
+            'message' => 'Venta procesada exitosamente',
+            'venta' => $venta->toArray(),
         ], 201);
     }
 
