@@ -5,7 +5,8 @@ import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Search, Edit, Trash2, Plus, Save, X } from "lucide-react";
-import { getProductos, saveProductos, addProducto, getNextId, getCategoriasByTipo, type Producto as ProductoType } from "../../lib/storage";
+import { productosAPI } from "../../src/services/api";
+import type { Producto as ProductoType } from "../../src/types/inventario.types";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,7 @@ import {
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface ProductosProps {
   userRole?: "Administrador" | "Empleado";
@@ -50,17 +51,28 @@ export function Productos({ userRole = "Administrador" }: ProductosProps) {
     loadCategorias();
   }, []);
 
-  const loadProductos = () => {
-    const productosData = getProductos();
-    setProductos(productosData);
+  const loadProductos = async () => {
+    try {
+      const response = await productosAPI.getProductos();
+      setProductos(response.data);
+    } catch (error) {
+      console.error('Error cargando productos:', error);
+      toast.error('Error al cargar productos');
+    }
   };
 
-  const loadCategorias = () => {
-    const categoriasData = getCategoriasByTipo("Producto");
-    const nombresActivos = categoriasData
-      .filter(c => c.estado === "Activa")
-      .map(c => c.nombre);
-    setCategoriasProductos(nombresActivos);
+  const loadCategorias = async () => {
+    try {
+      const response = await productosAPI.getCategorias();
+      const categoriasData = response.data;
+      const nombresActivos = categoriasData
+        .filter((c: any) => c.estado === "Activa")
+        .map((c: any) => c.nombre);
+      setCategoriasProductos(nombresActivos);
+    } catch (error) {
+      console.error('Error cargando categorías:', error);
+      toast.error('Error al cargar categorías');
+    }
   };
 
   const filteredProductos = productos.filter(prod =>
@@ -73,16 +85,18 @@ export function Productos({ userRole = "Administrador" }: ProductosProps) {
     setShowEditDialog(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingProduct) {
-      const updatedProductos = productos.map(prod => 
-        prod.id === editingProduct.id ? editingProduct : prod
-      );
-      saveProductos(updatedProductos);
-      setProductos(updatedProductos);
-      setShowEditDialog(false);
-      setEditingProduct(null);
-      toast.success("Producto actualizado exitosamente");
+      try {
+        await productosAPI.updateProducto(editingProduct.id, editingProduct);
+        await loadProductos();
+        setShowEditDialog(false);
+        setEditingProduct(null);
+        toast.success("Producto actualizado exitosamente");
+      } catch (error) {
+        console.error('Error actualizando producto:', error);
+        toast.error('Error al actualizar producto');
+      }
     }
   };
 
@@ -93,30 +107,34 @@ export function Productos({ userRole = "Administrador" }: ProductosProps) {
 
   const handleNewProduct = () => {
     const emptyProduct: ProductoType = {
-      id: getNextId(productos),
+      id: 0, // Se asignará en el backend
       nombre: "",
       categoria: categoriasProductos.length > 0 ? categoriasProductos[0] : "",
       tipo_producto: "No Preparado",
       precio: 0,
       stock: 0,
-      estado: "Disponible",
-      receta: []
+      estado: "Disponible"
     };
     setNewProduct(emptyProduct);
     setShowNewDialog(true);
   };
 
-  const handleSaveNewProduct = () => {
+  const handleSaveNewProduct = async () => {
     if (newProduct) {
       if (!newProduct.nombre.trim()) {
         toast.error("El nombre del producto es obligatorio");
         return;
       }
-      addProducto(newProduct);
-      loadProductos();
-      setShowNewDialog(false);
-      setNewProduct(null);
-      toast.success(`Producto "${newProduct.nombre}" creado exitosamente`);
+      try {
+        await productosAPI.createProducto(newProduct);
+        await loadProductos();
+        setShowNewDialog(false);
+        setNewProduct(null);
+        toast.success("Producto creado exitosamente");
+      } catch ( error ) {
+        console.error('Error creando producto:', error);
+        toast.error('Error al crear producto');
+      }
     }
   };
 
@@ -130,15 +148,19 @@ export function Productos({ userRole = "Administrador" }: ProductosProps) {
     setShowDeleteDialog(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deletingProductId) {
-      const producto = productos.find(p => p.id === deletingProductId);
-      const updatedProductos = productos.filter(prod => prod.id !== deletingProductId);
-      saveProductos(updatedProductos);
-      setProductos(updatedProductos);
-      setShowDeleteDialog(false);
-      setDeletingProductId(null);
-      toast.success(`Producto "${producto?.nombre}" eliminado exitosamente`);
+      try {
+        const producto = productos.find(p => p.id === deletingProductId);
+        await productosAPI.deleteProducto(deletingProductId);
+        await loadProductos();
+        setShowDeleteDialog(false);
+        setDeletingProductId(null);
+        toast.success(`Producto "${producto?.nombre}" eliminado exitosamente`);
+      } catch (error) {
+        console.error('Error eliminando producto:', error);
+        toast.error('Error al eliminar producto');
+      }
     }
   };
 

@@ -20,9 +20,9 @@ import type {
   CierreCaja,
   ProductoNE,
   GenerarComprobanteResult,
-} from '@/types';
-import { APP_CONFIG } from '@/config/app.config';
-import { CONSTANTS } from '@/config/constants';
+} from '../../types';
+import { APP_CONFIG } from '../../config/app.config';
+import { CONSTANTS } from '../../config/constants';
 
 // ============================================
 // UTILIDADES GENERALES

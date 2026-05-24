@@ -25,16 +25,16 @@ import {
 } from "../ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
-import { toast } from "sonner@2.0.3";
-import {
-  getCategorias,
-  saveCategorias,
-  addCategoria,
-  deleteCategoria,
-  getNextId,
-  getProductos,
-  type Categoria,
-} from "../../lib/storage";
+import { toast } from "sonner";
+
+interface Categoria {
+  categoria_id: number;
+  nombre_categoria: string;
+  descripcion?: string;
+  created_at?: string;
+  updated_at?: string;
+  itemsCount?: number;
+}
 
 export function Categorias() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -50,24 +50,51 @@ export function Categorias() {
     loadCategorias();
   }, []);
 
-  const loadCategorias = () => {
-    const categoriasData = getCategorias();
-    const productos = getProductos();
-    
-    // Filtrar solo categorías de Producto y calcular itemsCount dinámicamente
-    const categoriasProducto = categoriasData
-      .filter(cat => cat.tipo === "Producto")
-      .map(cat => {
-        const count = productos.filter(p => p.categoria === cat.nombre).length;
-        return { ...cat, itemsCount: count };
+  const loadCategorias = async () => {
+    try {
+      // Cargar categorías desde la API
+      const categoriasResponse = await fetch('http://localhost:8080/api/v1/categories', {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
-    
-    setCategorias(categoriasProducto);
+      
+      if (categoriasResponse.ok) {
+        const categoriasData = await categoriasResponse.json();
+        
+        // Cargar productos para contar cuántos hay por categoría
+        const productosResponse = await fetch('http://localhost:8080/api/v1/products', {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (productosResponse.ok) {
+          const productosData = await productosResponse.json();
+          const productos = productosData.data || [];
+          
+          // Calcular itemsCount dinámicamente
+          const categoriasConCount = categoriasData.map(cat => ({
+            ...cat,
+            itemsCount: productos.filter(p => p.categoria_id === cat.categoria_id).length
+          }));
+          
+          setCategorias(categoriasConCount);
+        } else {
+          setCategorias(categoriasData);
+        }
+      } else {
+        toast.error('Error cargando categorías');
+      }
+    } catch (error) {
+      console.error('Error cargando categorías:', error);
+      toast.error('Error de conexión cargando categorías');
+    }
   };
 
   const filteredCategorias = categorias.filter(cat => 
-    cat.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cat.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+    cat.nombre_categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (cat.descripcion && cat.descripcion.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleEdit = (categoria: Categoria) => {
@@ -75,23 +102,42 @@ export function Categorias() {
     setShowEditDialog(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingCategoria) {
-      if (!editingCategoria.nombre.trim()) {
+      if (!editingCategoria.nombre_categoria.trim()) {
         toast.error("El nombre de la categoría es obligatorio");
         return;
       }
       
-      // Obtener todas las categorías incluyendo insumos
-      const todasCategorias = getCategorias();
-      const updatedCategorias = todasCategorias.map(cat =>
-        cat.id === editingCategoria.id ? editingCategoria : cat
-      );
-      saveCategorias(updatedCategorias);
-      loadCategorias();
-      setShowEditDialog(false);
-      setEditingCategoria(null);
-      toast.success("Categoría actualizada exitosamente");
+      try {
+        const response = await fetch(`http://localhost:8080/api/v1/categories/${editingCategoria.categoria_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nombre_categoria: editingCategoria.nombre_categoria,
+            descripcion: editingCategoria.descripcion || ''
+          }),
+        });
+
+        if (response.ok) {
+          await loadCategorias();
+          setShowEditDialog(false);
+          setEditingCategoria(null);
+          toast.success("Categoría actualizada exitosamente");
+        } else {
+          let errorMessage = `Error ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData?.message) errorMessage = errorData.message;
+          } catch {}
+          toast.error(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error actualizando categoría:', error);
+        toast.error('Error de conexión actualizando categoría');
+      }
     }
   };
 
@@ -102,39 +148,51 @@ export function Categorias() {
 
   const handleNewCategoria = () => {
     const emptyCategoria: Categoria = {
-      id: getNextId(getCategorias()),
-      tipo: "Producto",
-      nombre: "",
+      categoria_id: 0,
+      nombre_categoria: "",
       descripcion: "",
-      itemsCount: 0,
-      estado: "Activa"
+      itemsCount: 0
     };
     setNewCategoria(emptyCategoria);
     setShowNewDialog(true);
   };
 
-  const handleSaveNewCategoria = () => {
+  const handleSaveNewCategoria = async () => {
     if (newCategoria) {
-      if (!newCategoria.nombre.trim()) {
+      if (!newCategoria.nombre_categoria.trim()) {
         toast.error("El nombre de la categoría es obligatorio");
         return;
       }
       
-      // Verificar que no exista otra categoría de Producto con el mismo nombre
-      const todasCategorias = getCategorias();
-      const existe = todasCategorias.find(
-        c => c.nombre.toLowerCase() === newCategoria.nombre.toLowerCase() && c.tipo === "Producto"
-      );
-      if (existe) {
-        toast.error(`Ya existe una categoría de Producto con el nombre "${newCategoria.nombre}"`);
-        return;
+      try {
+        const response = await fetch('http://localhost:8080/api/v1/categories', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nombre_categoria: newCategoria.nombre_categoria,
+            descripcion: newCategoria.descripcion || ''
+          }),
+        });
+
+        if (response.ok) {
+          await loadCategorias();
+          setShowNewDialog(false);
+          setNewCategoria(null);
+          toast.success(`Categoría "${newCategoria.nombre_categoria}" creada exitosamente`);
+        } else {
+          let errorMessage = `Error ${response.status}`;
+          try {
+            const errorData = await response.json();
+            if (errorData?.message) errorMessage = errorData.message;
+          } catch {}
+          toast.error(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error creando categoría:', error);
+        toast.error('Error de conexión creando categoría');
       }
-      
-      addCategoria(newCategoria);
-      loadCategorias();
-      setShowNewDialog(false);
-      setNewCategoria(null);
-      toast.success(`Categoría "${newCategoria.nombre}" creada exitosamente`);
     }
   };
 
@@ -144,7 +202,10 @@ export function Categorias() {
   };
 
   const handleDeleteClick = (id: number) => {
-    const categoria = categorias.find(c => c.id === id);
+    console.log('handleDeleteClick llamado con id:', id);
+    console.log('Categorías disponibles:', categorias);
+    
+    const categoria = categorias.find(c => c.categoria_id === id);
     if (categoria && categoria.itemsCount > 0) {
       toast.error(`No se puede eliminar una categoría que tiene productos asociados`);
       return;
@@ -153,14 +214,41 @@ export function Categorias() {
     setShowDeleteDialog(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
+    console.log('handleConfirmDelete llamado, deletingCategoriaId:', deletingCategoriaId);
+    
     if (deletingCategoriaId) {
-      const categoria = categorias.find(c => c.id === deletingCategoriaId);
-      deleteCategoria(deletingCategoriaId);
-      loadCategorias();
-      setShowDeleteDialog(false);
-      setDeletingCategoriaId(null);
-      toast.success(`Categoría "${categoria?.nombre}" eliminada exitosamente`);
+      const categoria = categorias.find(c => c.categoria_id === deletingCategoriaId);
+      
+      try {
+        const url = `http://localhost:8080/api/v1/categories/${deletingCategoriaId}`;
+        console.log('URL de DELETE:', url);
+        
+        const response = await fetch(url, {
+          method: 'DELETE',
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
+        const responseData = await response.json();
+        console.log('Response data:', responseData);
+
+        if (response.ok) {
+          await loadCategorias();
+          setShowDeleteDialog(false);
+          setDeletingCategoriaId(null);
+          toast.success(`Categoría "${categoria?.nombre_categoria}" eliminada exitosamente`);
+        } else {
+          let errorMessage = `Error ${response.status}`;
+          if (responseData?.message) errorMessage = responseData.message;
+          if (responseData?.error) errorMessage = responseData.error;
+          toast.error(errorMessage);
+        }
+      } catch (error) {
+        console.error('Error eliminando categoría:', error);
+        toast.error('Error de conexión eliminando categoría');
+      }
     }
   };
 
@@ -182,8 +270,8 @@ export function Categorias() {
   };
 
   const totalCategorias = categorias.length;
-  const categoriasActivas = categorias.filter(c => c.estado === "Activa").length;
-  const totalProductos = categorias.reduce((sum, c) => sum + c.itemsCount, 0);
+  const categoriasActivas = categorias.length; // Todas están activas por ahora
+  const totalProductos = categorias.reduce((sum, c) => sum + (c.itemsCount || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -268,15 +356,15 @@ export function Categorias() {
                 </TableRow>
               ) : (
                 filteredCategorias.map((cat) => (
-                  <TableRow key={cat.id}>
-                    <TableCell>{cat.nombre}</TableCell>
-                    <TableCell className="text-muted-foreground">{cat.descripcion}</TableCell>
+                  <TableRow key={cat.categoria_id}>
+                    <TableCell>{cat.nombre_categoria}</TableCell>
+                    <TableCell className="text-muted-foreground">{cat.descripcion || 'Sin descripción'}</TableCell>
                     <TableCell className="text-right">
-                      <Badge variant="outline">{cat.itemsCount}</Badge>
+                      <Badge variant="outline">{cat.itemsCount || 0}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={cat.estado === "Activa" ? "default" : "outline"}>
-                        {cat.estado}
+                      <Badge variant="default">
+                        Activa
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
@@ -291,8 +379,8 @@ export function Categorias() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeleteClick(cat.id)}
-                          disabled={cat.itemsCount > 0}
+                          onClick={() => handleDeleteClick(cat.categoria_id)}
+                          disabled={(cat.itemsCount || 0) > 0}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -321,8 +409,8 @@ export function Categorias() {
                 <Label htmlFor="edit-nombre">Nombre de la Categoría</Label>
                 <Input
                   id="edit-nombre"
-                  value={editingCategoria.nombre}
-                  onChange={(e) => updateEditingCategoria('nombre', e.target.value)}
+                  value={editingCategoria.nombre_categoria}
+                  onChange={(e) => updateEditingCategoria('nombre_categoria', e.target.value)}
                 />
               </div>
 
@@ -330,38 +418,16 @@ export function Categorias() {
                 <Label htmlFor="edit-descripcion">Descripción</Label>
                 <Textarea
                   id="edit-descripcion"
-                  value={editingCategoria.descripcion}
+                  value={editingCategoria.descripcion || ''}
                   onChange={(e) => updateEditingCategoria('descripcion', e.target.value)}
                   rows={3}
                   placeholder="Describe brevemente esta categoría..."
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Estado</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={editingCategoria.estado === "Activa" ? "default" : "outline"}
-                    onClick={() => updateEditingCategoria('estado', 'Activa')}
-                    className="flex-1"
-                  >
-                    Activa
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={editingCategoria.estado === "Inactiva" ? "default" : "outline"}
-                    onClick={() => updateEditingCategoria('estado', 'Inactiva')}
-                    className="flex-1"
-                  >
-                    Inactiva
-                  </Button>
-                </div>
-              </div>
-
               <div className="bg-muted p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Productos asociados:</strong> {editingCategoria.itemsCount}
+                  <strong>Productos asociados:</strong> {editingCategoria.itemsCount || 0}
                 </p>
               </div>
             </div>
@@ -394,8 +460,8 @@ export function Categorias() {
                 <Label htmlFor="new-nombre">Nombre de la Categoría</Label>
                 <Input
                   id="new-nombre"
-                  value={newCategoria.nombre}
-                  onChange={(e) => updateNewCategoria('nombre', e.target.value)}
+                  value={newCategoria.nombre_categoria}
+                  onChange={(e) => updateNewCategoria('nombre_categoria', e.target.value)}
                   placeholder="Ej: Donas, Frapes, Bebidas, etc."
                 />
               </div>
@@ -411,28 +477,7 @@ export function Categorias() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Estado</Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={newCategoria.estado === "Activa" ? "default" : "outline"}
-                    onClick={() => updateNewCategoria('estado', 'Activa')}
-                    className="flex-1"
-                  >
-                    Activa
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={newCategoria.estado === "Inactiva" ? "default" : "outline"}
-                    onClick={() => updateNewCategoria('estado', 'Inactiva')}
-                    className="flex-1"
-                  >
-                    Inactiva
-                  </Button>
-                </div>
-              </div>
-
+              
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
                   💡 Las categorías te ayudan a organizar mejor tu inventario de productos
@@ -461,11 +506,11 @@ export function Categorias() {
             <AlertDialogDescription>
               Esta acción no se puede deshacer. La categoría será eliminada permanentemente del sistema.
               {deletingCategoriaId && (() => {
-                const cat = categorias.find(c => c.id === deletingCategoriaId);
+                const cat = categorias.find(c => c.categoria_id === deletingCategoriaId);
                 return (
                   <span className="block mt-2">
                     <strong>Categoría: </strong>
-                    {cat?.nombre}
+                    {cat?.nombre_categoria}
                   </span>
                 );
               })()}

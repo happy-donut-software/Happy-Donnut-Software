@@ -7,7 +7,7 @@ services:
   # -----------------------------------------------------------------
 
   db-auth:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: happydonut-db-auth
     restart: unless-stopped
     # Nota: No mapeamos puertos para evitar conflictos; la comunicación es interna.
@@ -22,15 +22,16 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d auth_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "5440:5432"  # Puerto mapeado solo para acceso externo si es necesario
 
   db-product:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: happydonut-db-product
     restart: unless-stopped
     volumes:
@@ -44,15 +45,16 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d product_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "5441:5432"
 
   db-inventory:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: happydonut-db-inventory
     restart: unless-stopped
     volumes:
@@ -66,15 +68,16 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d inventory_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "5442:5432"
 
   db-order:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: happydonut-db-order
     restart: unless-stopped
     volumes:
@@ -88,15 +91,16 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d order_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "5443:5432"
 
   db-email:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: happydonut-db-email
     restart: unless-stopped
     volumes:
@@ -110,15 +114,16 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d email_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "5444:5432"
 
   db-apigateway:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     container_name: happydonut-db-apigateway
     restart: unless-stopped
     volumes:
@@ -132,10 +137,11 @@ services:
     networks:
       - happydonut-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d apigateway_db"]
-      interval: 5s
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 20
     ports:
       - "5445:5432"
 
@@ -246,8 +252,6 @@ services:
       dockerfile: Dockerfile
     container_name: product-service-app
     restart: unless-stopped
-    ports:
-      - "9002:8000"
     volumes:
       - ./product_service:/var/www
       - /var/www/vendor
@@ -273,6 +277,20 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  product-service-nginx:
+    image: nginx:1.25-alpine
+    container_name: product-service-nginx
+    restart: unless-stopped
+    ports:
+      - "9002:80"
+    volumes:
+      - ./product_service:/var/www
+      - ./nginx-product.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - product-service
+    networks:
+      - happydonut-net
 
   # 4. Inventory Service
   inventory-service:

@@ -17,15 +17,42 @@ use App\Http\Controllers\PromocionController;
 |
 */
 
-Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
-    // Productos
+// Ruta de prueba para debug
+Route::get('/test', function() {
+    return response()->json(['message' => 'API working']);
+});
+
+Route::post('/test-post', function(Request $request) {
+    return response()->json(['data' => $request->all(), 'message' => 'POST working']);
+});
+
+Route::post('/create-simple', function() {
+    $product = \App\Models\Producto::create([
+        'categoria_id' => 1,
+        'nombre_producto' => 'Producto Simple',
+        'descripcion' => 'Creado desde ruta simple',
+        'precio_base' => 12.50,
+        'tipo_producto' => 'donut',
+        'activo_web' => true
+    ]);
+
+    return response()->json([
+        'message' => 'Producto creado exitosamente',
+        'product' => $product
+    ], 201);
+});
+
+// Productos (sin autenticación para desarrollo)
+Route::prefix('/v1')->group(function () {
     Route::get('/products', [ProductController::class, 'index']);
     Route::post('/products', [ProductController::class, 'store']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::put('/products/{id}/status', [ProductController::class, 'updateStatus']);
-    
+});
+
+Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
     // Categorías
     Route::get('/categories', [CategoriaController::class, 'index']);
     Route::post('/categories', [CategoriaController::class, 'store']);
@@ -45,6 +72,17 @@ Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
 Route::prefix('/v1')->group(function () {
     Route::get('/products/available', [ProductController::class, 'getAvailable']);
     Route::get('/products/search', [ProductController::class, 'search']);
+    
+    // Categorías públicas
     Route::get('/categories', [CategoriaController::class, 'index']);
+    Route::post('/categories', [CategoriaController::class, 'store']);
+    Route::put('/categories/{id}', [CategoriaController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoriaController::class, 'destroy']);
+    
     Route::get('/promotions/active', [PromocionController::class, 'getActive']);
+    
+    // Ruta de prueba para DELETE
+    Route::get('/test-delete', function() {
+        return response()->json(['message' => 'Test DELETE working']);
+    });
 });

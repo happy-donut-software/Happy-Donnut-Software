@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Laravel 12 tiene CORS integrado, no necesita Fruitcake
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

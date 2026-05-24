@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dashboard } from "./components/views/Dashboard";
 import { Comprobantes } from "./components/views/Comprobantes";
 import { NuevoComprobante } from "./components/views/NuevoComprobante";
-import { Productos } from "./components/views/Productos";
+import { ProductosSimple } from "./components/views/ProductosSimple";
 import { Compras } from "./components/views/Compras";
 import { NuevaCompra } from "./components/views/NuevaCompra";
 import { Promociones } from "./components/views/Promociones";
@@ -46,9 +46,11 @@ export default function App() {
   const [userRole, setUserRole] = useState<"Administrador" | "Empleado">("Empleado");
 
   const handleLogin = (usuario: string, rol: "Administrador" | "Empleado") => {
+    console.log('handleLogin llamado con:', { usuario, rol });
     setCurrentUser(usuario);
     setUserRole(rol);
     setShowLogin(false);
+    console.log('showLogin establecido a false');
   };
 
   const handleLogout = () => {
@@ -56,6 +58,9 @@ export default function App() {
   };
 
   const confirmLogout = () => {
+    // Limpiar token de autenticación
+    localStorage.removeItem('auth_token');
+    
     setShowLogin(true);
     setCurrentView("dashboard");
     setShowLogoutDialog(false);
@@ -79,7 +84,7 @@ export default function App() {
       
       // INVENTARIO - Admin (edición) / Empleado (solo lectura)
       case "productos":
-        return <Productos userRole={userRole} />;
+        return <ProductosSimple />;
       case "categorias":
         return isAdmin ? <Categorias /> : <Dashboard />;
       

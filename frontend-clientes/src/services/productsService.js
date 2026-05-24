@@ -1,5 +1,7 @@
 // src/services/productsService.js
-const GATEWAY_BASE_URL = process.env.REACT_APP_GATEWAY_URL;
+// URL base del API Gateway. Si no viene por variable de entorno,
+// usamos por defecto http://localhost:8080 (entorno de desarrollo).
+const GATEWAY_BASE_URL = process.env.REACT_APP_GATEWAY_URL || 'http://localhost:8080';
 
 // ----------------------------------------------------------------------
 // Función Auxiliar para llamadas públicas al API Gateway (sin token)

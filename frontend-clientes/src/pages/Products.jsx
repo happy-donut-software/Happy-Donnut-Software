@@ -12,10 +12,6 @@ export default function Products({ addToCart }) {
   const [error, setError] = useState(null);
 
   // Cargar productos desde el backend
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
   const loadProducts = async () => {
     try {
       setLoading(true);
@@ -46,15 +42,7 @@ export default function Products({ addToCart }) {
     }
   };
 
-  // Buscar productos cuando cambia el término de búsqueda
-  useEffect(() => {
-    if (searchTerm.trim()) {
-      handleSearch();
-    } else {
-      loadProducts();
-    }
-  }, [searchTerm, handleSearch]);
-
+  // Búsqueda de productos (memoizada)
   const handleSearch = useCallback(async () => {
     try {
       setLoading(true);
@@ -83,6 +71,20 @@ export default function Products({ addToCart }) {
       setLoading(false);
     }
   }, [searchTerm]);
+
+  // Cargar productos iniciales
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  // Buscar productos cuando cambia el término de búsqueda
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      handleSearch();
+    } else {
+      loadProducts();
+    }
+  }, [searchTerm, handleSearch]);
 
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'todos' || product.category === selectedCategory;

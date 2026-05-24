@@ -12,9 +12,9 @@ class GatewayController extends Controller
     // IMPORTANTE: Usar los NOMBRES DE SERVICIO del docker-compose.yml
     // NO los nombres de contenedor (container_name)
     protected const AUTH_URL = 'http://auth-service:8000';
-    protected const PRODUCT_URL = 'http://product-service:8000';
-    protected const INVENTORY_URL = 'http://inventory-service:8000';
-    protected const ORDER_URL = 'http://order-service:8000';
+    protected const PRODUCT_URL = 'http://product-service-nginx:80';
+    protected const INVENTORY_URL = 'http://inventory-service:8002';
+    protected const ORDER_URL = 'http://order-service:8003';
     protected const EMAIL_URL = 'http://email-service:8000';
 
 
@@ -38,11 +38,15 @@ class GatewayController extends Controller
 
             switch (strtolower($method)) {
                 case 'post':
-                    return $http->post($url, $request->all());
+                    // Intentar obtener datos JSON primero
+                    $data = $request->json()->all() ?: $request->all();
+                    return $http->post($url, $data);
                 case 'put':
-                    return $http->put($url, $request->all());
+                    $data = $request->json()->all() ?: $request->all();
+                    return $http->put($url, $data);
                 case 'delete':
-                    return $http->delete($url, $request->all());
+                    $data = $request->json()->all() ?: $request->all();
+                    return $http->delete($url, $data);
                 case 'get':
                 default:
                     $fullUrl = $url . '?' . $request->getQueryString();
@@ -142,19 +146,20 @@ class GatewayController extends Controller
     //  MÉTODOS DE INVENTORY SERVICE
     // ===================================================================
 
-    public function getProducts(Request $request)
+    // Productos (Inventory Service)
+    public function getInventoryProducts(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/v1/products', 'get');
         return response()->json($response->json(), $response->status());
     }
 
-    public function getProduct(Request $request, $id)
+    public function getInventoryProduct(Request $request, $id)
     {
         $response = $this->makeServiceRequest($request, self::INVENTORY_URL . "/api/v1/products/{$id}", 'get');
         return response()->json($response->json(), $response->status());
     }
 
-    public function createProduct(Request $request)
+    public function createInventoryProduct(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/v1/products', 'post');
         return response()->json($response->json(), $response->status());
@@ -179,9 +184,138 @@ class GatewayController extends Controller
     public function getCategories(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::PRODUCT_URL . '/api/v1/categories', 'get');
+        return response($response->body(), $response->status());
+    }
+
+    public function createCategory(Request $request)
+    {
+        try {
+            $response = $this->makeServiceRequest($request, self::PRODUCT_URL . '/api/v1/categories', 'post');
+            return response($response->body(), $response->status());
+        } catch (Exception $e) {
+            \Log::error('Create Category Failed', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'error' => 'Failed to create category',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateCategory(Request $request, $id)
+    {
+        try {
+            $response = $this->makeServiceRequest($request, self::PRODUCT_URL . "/api/v1/categories/{$id}", 'put');
+            return response($response->body(), $response->status());
+        } catch (Exception $e) {
+            \Log::error('Update Category Failed', [
+                'error' => $e->getMessage(),
+                'category_id' => $id
+            ]);
+            return response()->json([
+                'error' => 'Failed to update category',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteCategory(Request $request, $id)
+    {
+        try {
+            $response = $this->makeServiceRequest($request, self::PRODUCT_URL . "/api/v1/categories/{$id}", 'delete');
+            return response($response->body(), $response->status());
+        } catch (Exception $e) {
+            \Log::error('Delete Category Failed', [
+                'error' => $e->getMessage(),
+                'category_id' => $id
+            ]);
+            return response()->json([
+                'error' => 'Failed to delete category',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProduct(Request $request, $id)
+    {
+        try {
+            $response = $this->makeServiceRequest($request, self::PRODUCT_URL . "/api/v1/products/{$id}", 'put');
+            return response($response->body(), $response->status());
+        } catch (Exception $e) {
+            \Log::error('Update Product Failed', [
+                'error' => $e->getMessage(),
+                'product_id' => $id
+            ]);
+            return response()->json([
+                'error' => 'Failed to update product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteProduct(Request $request, $id)
+    {
+        try {
+            $response = $this->makeServiceRequest($request, self::PRODUCT_URL . "/api/v1/products/{$id}", 'delete');
+            return response($response->body(), $response->status());
+        } catch (Exception $e) {
+            \Log::error('Delete Product Failed', [
+                'error' => $e->getMessage(),
+                'product_id' => $id
+            ]);
+            return response()->json([
+                'error' => 'Failed to delete product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Productos administrativos completos
+    public function getProducts(Request $request)
+    {
+        $response = $this->makeServiceRequest($request, self::PRODUCT_URL . '/api/v1/products', 'get');
+        return response($response->body(), $response->status());
+    }
+
+    public function createProduct(Request $request)
+    {
+        // Log para depuración
+        \Log::info('Gateway Create Product Request:', [
+            'all_data' => $request->all(),
+            'url' => self::PRODUCT_URL . '/api/v1/products'
+        ]);
+
+        try {
+            $response = $this->makeServiceRequest($request, self::PRODUCT_URL . '/api/v1/products', 'post');
+            
+            \Log::info('Gateway Create Product Response:', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            
+            return response($response->body(), $response->status());
+        } catch (Exception $e) {
+            \Log::error('Create Product Failed', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'error' => 'Failed to create product',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getProduct(Request $request, $id)
+    {
+        $response = $this->makeServiceRequest($request, self::PRODUCT_URL . "/api/v1/products/{$id}", 'get');
         return response()->json($response->json(), $response->status());
     }
 
+    
+    
     // ===================================================================
     //  MÉTODOS DE ORDER SERVICE
     // ===================================================================

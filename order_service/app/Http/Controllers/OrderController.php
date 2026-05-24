@@ -15,7 +15,7 @@ class OrderController extends Controller
     public function getAvailableProducts()
     {
         try {
-            $response = Http::get('http://product-service:8001/api/v1/products');
+            $response = Http::get('http://product-service:8000/api/v1/products');
             
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -33,7 +33,7 @@ class OrderController extends Controller
     public function getCategories()
     {
         try {
-            $response = Http::get('http://product-service:8001/api/v1/categories');
+            $response = Http::get('http://product-service:8000/api/v1/categories');
             
             if ($response->successful()) {
                 return response()->json($response->json());
@@ -117,7 +117,7 @@ class OrderController extends Controller
 
         // Obtener precios de productos
         try {
-            $productsResponse = Http::get('http://product-service:8001/api/v1/products');
+            $productsResponse = Http::get('http://product-service:8000/api/v1/products');
             $products = collect($productsResponse->json());
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al obtener precios de productos'], 500);

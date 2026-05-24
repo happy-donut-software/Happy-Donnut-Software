@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import logoImage from "figma:asset/59d28967ce75ac74e6d8777b6505de4c2ba7cb58.png";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface LoginProps {
   onLogin: (usuario: string, rol: "Administrador" | "Empleado") => void;
@@ -20,11 +20,11 @@ export function Login({ onLogin }: LoginProps) {
   const [contraseña, setContraseña] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!usuario.trim()) {
-      toast.error("Ingresa tu usuario");
+      toast.error("Ingresa tu correo");
       return;
     }
     
@@ -35,20 +35,43 @@ export function Login({ onLogin }: LoginProps) {
 
     setIsLoading(true);
 
-    // Simular tiempo de autenticación
-    setTimeout(() => {
-      const usuarioEncontrado = USUARIOS.find(
-        u => u.usuario === usuario.toLowerCase() && u.contraseña === contraseña
-      );
+    try {
+      console.log('Intentando login con:', { email: usuario, password: '***' });
+      
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: usuario,
+          password: contraseña
+        })
+      });
 
-      if (usuarioEncontrado) {
-        toast.success(`Bienvenido, ${usuarioEncontrado.rol}`);
-        onLogin(usuarioEncontrado.usuario, usuarioEncontrado.rol);
+      console.log('Respuesta status:', response.status);
+      const data = await response.json();
+      console.log('Respuesta data:', data);
+
+      if (response.ok) {
+        // Guardar token real del auth service
+        if (data.access_token) {
+          localStorage.setItem('auth_token', data.access_token);
+          console.log('Token guardado:', data.access_token);
+        }
+        
+        toast.success(`Bienvenido, ${usuario}`);
+        console.log('Llamando a onLogin...');
+        onLogin(usuario, "Administrador");
       } else {
-        toast.error("Usuario o contraseña incorrectos");
-        setIsLoading(false);
+        toast.error(data.message || "Usuario o contraseña incorrectos");
       }
-    }, 500);
+    } catch (error) {
+      console.error('Error de login:', error);
+      toast.error("Error de conexión con el servidor");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,11 +89,11 @@ export function Login({ onLogin }: LoginProps) {
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="usuario">Usuario</Label>
+              <Label htmlFor="usuario">Correo</Label>
               <Input
                 id="usuario"
-                type="text"
-                placeholder="Ingresa tu usuario"
+                type="email"
+                placeholder="Ingresa tu correo"
                 className="bg-input-background"
                 value={usuario}
                 onChange={(e) => setUsuario(e.target.value)}

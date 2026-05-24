@@ -12,6 +12,7 @@ export interface Producto {
   id: number;
   nombre: string;
   categoria: string;
+  categoria_id?: number;
   tipo_producto: TipoProducto;
   precio: number;
   stock: number;

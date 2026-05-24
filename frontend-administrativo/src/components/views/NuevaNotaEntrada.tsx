@@ -27,14 +27,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
-  getProductos, 
-  updateProducto,
-  addNotaEntrada,
-  generateNotaEntradaNumero,
-  getNextId,
-  getNotasEntrada,
-  type Producto
-} from "../../lib/storage";
+  productosAPI,
+  type ProductoAPI as Producto
+} from "../../src/services/api/productos.service";
+import { 
+  notasEntradaService,
+  type CreateNotaEntradaRequest
+} from "../../src/services/api/notasEntrada.service";
 
 interface ItemEntrada {
   id: number;
@@ -60,8 +59,14 @@ export default function NuevaNotaEntrada() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    setProductos(getProductos());
+  const loadData = async () => {
+    try {
+      const response = await productosAPI.getProductos();
+      setProductos(response.data);
+    } catch (error) {
+      console.error('Error cargando productos:', error);
+      toast.error('Error cargando productos');
+    }
   };
 
   const handleAgregarItem = () => {
@@ -104,8 +109,7 @@ export default function NuevaNotaEntrada() {
     toast.success("Item eliminado");
   };
 
-  const handleGenerarNota = () => {
-    // Validaciones
+  const handleGenerarNota = async () => {
     if (!motivo) {
       toast.error("Debe seleccionar un motivo");
       return;
@@ -116,46 +120,39 @@ export default function NuevaNotaEntrada() {
       return;
     }
 
-    // Procesar la nota de entrada
-    const currentUser = localStorage.getItem('currentUser') || 'Sistema';
-    const now = new Date();
-    const hora = now.toTimeString().split(' ')[0].substring(0, 5);
+    try {
+      const currentUser = localStorage.getItem('currentUser') || 'Sistema';
+      const now = new Date();
+      const hora = now.toTimeString().split(' ')[0].substring(0, 5);
 
-    // Crear la nota de entrada
-    const notaEntrada = {
-      id: getNextId(getNotasEntrada()),
-      numero: generateNotaEntradaNumero(),
-      fecha: format(fecha, 'yyyy-MM-dd'),
-      hora: hora,
-      motivo: motivo as any,
-      docReferencia: docReferencia || undefined,
-      productos: items.map(item => ({
-        id: item.id,
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        unidad: item.unidad,
-      })),
-      observaciones: observaciones || undefined,
-      usuario: currentUser,
-    };
+      const notaEntradaRequest: CreateNotaEntradaRequest = {
+        fecha: format(fecha, 'yyyy-MM-dd'),
+        hora: hora,
+        motivo: motivo,
+        doc_referencia: docReferencia || undefined,
+        observaciones: observaciones || undefined,
+        usuario: currentUser,
+        productos: items.map(item => ({
+          producto_id: item.id,
+          cantidad: item.cantidad,
+          unidad: item.unidad,
+        })),
+      };
 
-    // Guardar la nota
-    addNotaEntrada(notaEntrada);
+      const notaCreada = await notasEntradaService.create(notaEntradaRequest);
 
-    // Actualizar inventarios - incrementar stock de productos
-    for (const item of items) {
-      updateProducto(item.id, item.cantidad);
+      toast.success(`Nota de Entrada ${notaCreada.numero} generada exitosamente`);
+      
+      setFecha(new Date());
+      setMotivo("");
+      setDocReferencia("");
+      setObservaciones("");
+      setItems([]);
+      loadData(); // Recargar datos
+    } catch (error) {
+      console.error('Error guardando nota de entrada:', error);
+      toast.error('Error guardando nota de entrada');
     }
-
-    toast.success(`Nota de Entrada ${notaEntrada.numero} generada exitosamente`);
-    
-    // Limpiar formulario
-    setFecha(new Date());
-    setMotivo("");
-    setDocReferencia("");
-    setObservaciones("");
-    setItems([]);
-    loadData(); // Recargar datos
   };
 
   const handleCancelar = () => {

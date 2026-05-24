@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Search, Eye, Calendar, FileText } from "lucide-react";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -26,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { getNotasEntrada, type NotaEntrada, type ProductoNE } from "../../lib/storage";
+import { notasEntradaService, type NotaEntrada, type ProductoNE } from "../../src/services/api/notasEntrada.service";
 
 export default function NotasEntrada() {
   const [notas, setNotas] = useState<NotaEntrada[]>([]);
@@ -40,10 +41,15 @@ export default function NotasEntrada() {
     loadNotas();
   }, []);
 
-  const loadNotas = () => {
-    const notasData = getNotasEntrada();
-    setNotas(notasData);
-    setFilteredNotas(notasData);
+  const loadNotas = async () => {
+    try {
+      const response = await notasEntradaService.getAll();
+      setNotas(response.data);
+      setFilteredNotas(response.data);
+    } catch (error) {
+      console.error('Error cargando notas de entrada:', error);
+      toast.error('Error cargando notas de entrada');
+    }
   };
 
   // Filtrado
