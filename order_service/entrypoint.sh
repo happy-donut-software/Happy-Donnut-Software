@@ -36,7 +36,7 @@ fi
 echo "Running migrations..."
 php artisan migrate --force
 
-# 6. INICIAR EL PROCESO PRINCIPAL
-echo "Starting PHP-FPM..."
-# El exec reemplaza el proceso shell por el proceso php-fpm, asegurando un PID 1 correcto.
-exec php-fpm
+echo "Entorno listo. Ejecutando comando..."
+
+# Ejecuta cualquier comando que Docker le pase (o el CMD por defecto)
+exec "$@"

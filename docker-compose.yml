@@ -153,7 +153,7 @@ services:
     container_name: api-gateway-nginx
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./apigateway:/var/www
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
@@ -205,7 +205,7 @@ services:
         order-service:
           condition: service_healthy
     healthcheck:
-      test: ["CMD", "php-fpm", "-t"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -240,7 +240,7 @@ services:
       db-auth:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "php-fpm", "-t"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -273,7 +273,7 @@ services:
       db-product:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "php-fpm", "-t"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -322,7 +322,7 @@ services:
       db-inventory:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "php-fpm", "-t"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -362,7 +362,7 @@ services:
       db-order:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "php-fpm", "-t"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -404,10 +404,48 @@ services:
       # db: # Descomentar si realmente usa la DB
       #  condition: service_healthy
     healthcheck:
-      test: ["CMD", "php-fpm", "-t"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
       interval: 30s
       timeout: 10s
       retries: 3
+      
+  # 7. Frontend Clientes (CRA - npm start)
+  # Se servirá en el puerto 3000 interno
+  frontend-clientes:
+    build:
+      context: ./frontend-clientes  # Asegúrate que el nombre de carpeta coincida
+      dockerfile: Dockerfile
+    container_name: frontend-clientes-app
+    restart: unless-stopped
+    volumes:
+      - ./frontend-clientes:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000" # Acceso directo si Nginx falla
+    environment:
+      - PORT=3000
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
+    networks:
+      - happydonut-net
+
+  # 8. Frontend Administrativo (Vite - npm run dev)
+  # Se servirá en el puerto 5173 interno
+  frontend-administrativo:
+    build:
+      context: ./frontend-administrativo # Asegúrate que el nombre de carpeta coincida
+      dockerfile: Dockerfile
+    container_name: frontend-administrativo-app
+    restart: unless-stopped
+    volumes:
+      - ./frontend-administrativo:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173" # Acceso directo si Nginx falla
+    environment:
+      - VITE_PORT=5173
+    networks:
+      - happydonut-net
 
   rabbitmq:
     image: rabbitmq:3-management-alpine

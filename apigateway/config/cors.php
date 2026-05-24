@@ -1,13 +1,19 @@
 <?php
 
 return [
-    'paths' => ['api/*', '*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'], // Asegúrate de incluir la ruta de la cookie
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:3000', 'http://localhost:3003', '*'],
+    
+    // CAMBIO AQUÍ: Quita '*' y pon tu dominio real
+    'allowed_origins' => [
+        'http://localhost:3000', 
+        'https://happydonut.online', 
+        'https://www.happydonut.online'
+    ],
+    
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
     'max_age' => 0,
-    'supports_credentials' => true,
+    'supports_credentials' => true, // Esto obliga a no usar '*' arriba
 ];
-

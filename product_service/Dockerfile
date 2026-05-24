@@ -32,7 +32,6 @@ RUN chown -R www-data:www-data /var/www \
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["php-fpm"]
-
-# Exponer puerto
-EXPOSE 9000
+# Comando
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+EXPOSE 8000

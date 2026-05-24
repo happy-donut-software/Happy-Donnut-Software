@@ -35,8 +35,7 @@ fi
 # El env=production es opcional si ya está en .env, pero lo mantenemos si lo necesitas.
 echo "Running migrations..."
 php artisan migrate --force
+echo "Entorno listo. Ejecutando comando..."
 
-# 6. INICIAR EL PROCESO PRINCIPAL
-echo "Starting PHP-FPM..."
-# El exec reemplaza el proceso shell por el proceso php-fpm, asegurando un PID 1 correcto.
-exec php-fpm
+# Ejecuta cualquier comando que Docker le pase (o el CMD por defecto)
+exec "$@"

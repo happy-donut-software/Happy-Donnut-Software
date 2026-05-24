@@ -43,7 +43,7 @@ php artisan package:discover --ansi || true
 echo "Running migrations..."
 php artisan migrate --force
 
-# 6. INICIAR EL SERVIDOR HTTP DE LARAVEL
-echo "Starting Laravel HTTP server on port 8000..."
-# Iniciamos php artisan serve escuchando en todas las interfaces, puerto 8000.
-exec php artisan serve --host=0.0.0.0 --port=8000
+echo "Entorno listo. Ejecutando comando..."
+
+# Ejecuta cualquier comando que Docker le pase (o el CMD por defecto)
+exec "$@"
