@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use App\Models\Venta;
-use App\Models\DetalleVenta;
+use App\Core\Application\UseCases\ProcesarVentaUseCase;
 
 class OrderController extends Controller
 {
+    public function __construct(private readonly ProcesarVentaUseCase $procesarVentaUseCase)
+    {
+    }
     /**
      * Obtener productos disponibles desde product_service
      */
@@ -98,71 +100,37 @@ class OrderController extends Controller
         $request->validate([
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer',
+            'items.*.nombre_producto' => 'required|string',
+            'items.*.precio_unitario_venta' => 'required|numeric|min:0',
             'items.*.quantity' => 'required|integer|min:1',
-            'payment_method' => 'required|string'
+            'metodo_pago_id' => 'nullable|integer',
+            'dinero_recibido' => 'required|numeric|min:0',
         ]);
 
-        $userId = $request->user()->id;
-        $total = 0;
+        $payload = [
+            'cliente_id' => $request->user()->id,
+            'empleado_id' => 1,
+            'metodo_pago_id' => $request->input('metodo_pago_id'),
+            'dinero_recibido' => $request->input('dinero_recibido'),
+            'items' => $request->input('items'),
+        ];
 
-        // Verificar disponibilidad y calcular total
-        foreach ($request->items as $item) {
-            if (!$this->checkInventory($item['product_id'], $item['quantity'])) {
-                return response()->json([
-                    'error' => 'Producto no disponible o sin stock suficiente',
-                    'product_id' => $item['product_id']
-                ], 400);
-            }
-        }
-
-        // Obtener precios de productos
         try {
+<<<<<<< HEAD
             $productsResponse = Http::get('http://product-service:8000/api/v1/products');
             $products = collect($productsResponse->json());
+=======
+            $venta = $this->procesarVentaUseCase->execute($payload);
+            return response()->json([
+                'message' => 'Orden procesada exitosamente',
+                'order' => $venta->toArray(),
+            ], 201);
+        } catch (\DomainException $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+>>>>>>> feature/hexagonal-refactor
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Error al obtener precios de productos'], 500);
+            return response()->json(['error' => 'Error al procesar la orden'], 500);
         }
-
-        // Calcular total y reservar inventario
-        foreach ($request->items as $item) {
-            $product = $products->firstWhere('producto_id', $item['product_id']);
-            if (!$product) {
-                return response()->json(['error' => 'Producto no encontrado'], 404);
-            }
-            
-            $total += $product['precio_base'] * $item['quantity'];
-            
-            if (!$this->reserveInventory($item['product_id'], $item['quantity'])) {
-                return response()->json(['error' => 'No se pudo reservar el inventario'], 400);
-            }
-        }
-
-        // Crear venta
-        $venta = Venta::create([
-            'cliente_id' => $userId,
-            'empleado_id' => 1, // Empleado por defecto
-            'total_venta' => $total,
-            'estado_pedido' => 'pendiente',
-            'fecha_venta' => now()
-        ]);
-
-        // Crear detalles de venta
-        foreach ($request->items as $item) {
-            $product = $products->firstWhere('producto_id', $item['product_id']);
-            
-            DetalleVenta::create([
-                'venta_id' => $venta->venta_id,
-                'producto_id' => $item['product_id'],
-                'nombre_producto' => $product['nombre_producto'],
-                'precio_unitario_venta' => $product['precio_base'],
-                'cantidad' => $item['quantity']
-            ]);
-        }
-
-        return response()->json([
-            'message' => 'Orden creada exitosamente',
-            'order' => $venta->load('detalles')
-        ], 201);
     }
 
     /**
