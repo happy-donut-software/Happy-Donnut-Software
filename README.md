@@ -2,7 +2,7 @@
 
 Para mantener el código ordenado y trabajar en equipo sin romper nada, todos los desarrolladores deben seguir nuestras reglas de Git y Arquitectura:
 
-*   [Guía de Flujo de Ramas en Git](docs/git workflow/ramas.md) 🚀
+*   [Guía de Flujo de Ramas en Git](docs/git-workflow/ramas.md) 🚀
 *   [Arquitectura Hexagonal y Lenguaje Ubicuo (Próximamente)]()
 
 ---
