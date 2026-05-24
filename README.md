@@ -1,35 +1,11 @@
-# Happy-Donnut-Software
-software para la microempresa happy donnut
+## 📖 Documentación del Proyecto
 
-## 🌳 Convención de Ramas 
+Para mantener el código ordenado y trabajar en equipo sin romper nada, todos los desarrolladores deben seguir nuestras reglas de Git y Arquitectura:
 
-Para mantener el repositorio organizado, los nombres de las ramas deben indicar claramente **qué** se está haciendo y **dónde**.
+*   [Guía de Flujo de Ramas en Git](docs/git workflow/ramas.md) 🚀
+*   [Arquitectura Hexagonal y Lenguaje Ubicuo (Próximamente)]()
 
-### 1. El Modelo (Sintaxis)
-
-Cada rama nueva debe seguir esta estructura exacta:
-
-`tipo/alcance/accion-descripcion`
-
-* **tipo**: La categoría del trabajo (ver lista abajo).
-* **alcance**: El microservicio o carpeta afectada (ej: `auth`, `inventory`, `frontend`).
-* **accion-descripcion**: Una descripción breve usando guiones (kebab-case) que empiece preferiblemente con un verbo.
-
-> **Ejemplo real:** `feature/auth/implement-google-login`
-
-### 2. Lista de Tipos de Ramas
-
-Usa estos prefijos para categorizar tus ramas:
-
-| Prefijo | Cuándo usarlo (Propósito) | Ejemplo de Nombre |
-| :--- | :--- | :--- |
-| **`feature/`** | **Nuevas funcionalidades** o cambios en la lógica de negocio. | `feature/order/create-invoice-pdf` |
-| **`fix/`** | **Corrección de errores** (*bugs*) normales. | `fix/frontend/pagination-error` |
-| **`hotfix/`** | **Errores críticos** que deben arreglarse urgentemente en producción. | `hotfix/auth/security-patch` |
-| **`refactor/`** | **Reorganización de código** o limpieza que no cambia la funcionalidad. | `refactor/product/simplify-db-query` |
-| **`chore/`** | **Mantenimiento**, actualizaciones de librerías o configuración. | `chore/docker/update-python-version` |
-| **`docs/`** | Cambios exclusivos en **documentación**. | `docs/add-architecture-diagram` |
-| **`test/`** | Creación o arreglo de **pruebas** (tests). | `test/inventory/add-stock-unit-tests` |
+---
 ## 📝 Convención de Commits
 
 Para mantener un historial limpio y generar versiones automáticamente, utilizamos la especificación **Conventional Commits**.
