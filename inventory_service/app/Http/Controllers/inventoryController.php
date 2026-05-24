@@ -104,18 +104,12 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Producto no encontrado'], 404);
         }
 
-<<<<<<< HEAD:inventory_service/app/Http/Controllers/inventoryController.php
-        // Liberar insumos reservados
-        $this->releaseIngredients($product, $request->quantity);
-        return response()->json(['message' => 'Inventario liberado exitosamente'], 200);
-=======
         foreach ($product->insumos as $insumo) {
             $releaseQuantity = $insumo->pivot->cantidad_necesaria * $request->quantity;
             $this->releaseIngredients($insumo->insumo_id, $releaseQuantity);
         }
 
         return response()->json(['message' => 'Inventario liberado exitosamente']);
->>>>>>> feature/hexagonal-refactor:inventory_service/app/Http/Controllers/InventoryController.php
     }
 
     /**
@@ -152,12 +146,6 @@ class InventoryController extends Controller
         ]);
     }
 
-<<<<<<< HEAD:inventory_service/app/Http/Controllers/inventoryController.php
-    /**
-     * Verificar si se puede producir una cantidad específica
-     */
-=======
->>>>>>> feature/hexagonal-refactor:inventory_service/app/Http/Controllers/InventoryController.php
     private function canProduceQuantity($product, $quantity)
     {
         foreach ($product->insumos as $insumo) {
@@ -199,30 +187,6 @@ class InventoryController extends Controller
     private function releaseIngredients(int $insumoId, float $releaseQuantity): void
     {
         $lote = LoteInsumo::where('insumo_id', $insumoId)
-<<<<<<< HEAD:inventory_service/app/Http/Controllers/inventoryController.php
-                          ->orderBy('fecha_vencimiento')
-                          ->first();
-        
-            if (!$lote) {
-            // Crear nuevo lote si no existe
-            $lote = LoteInsumo::create([
-                'insumo_id' => $insumoId,
-                'cantidad_inicial' => $quantity,
-                'cantidad_actual' => $quantity,
-                'fecha_vencimiento' => now()->addYear()
-            ]);
-        } else {
-            // Ajustar cantidad existente
-            if ($type === 'entrada') {
-                $lote->cantidad_actual += $quantity;
-            } else {
-                $lote->cantidad_actual = max(0, $lote->cantidad_actual - $quantity);
-            }
-            $lote->save();
-        }
-    }
-}
-=======
             ->orderBy('fecha_caducidad', 'desc')
             ->first();
 
@@ -260,4 +224,3 @@ class InventoryController extends Controller
         $lote->save();
     }
 }
->>>>>>> feature/hexagonal-refactor:inventory_service/app/Http/Controllers/InventoryController.php

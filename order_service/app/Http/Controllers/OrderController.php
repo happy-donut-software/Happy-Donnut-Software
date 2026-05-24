@@ -116,10 +116,6 @@ class OrderController extends Controller
         ];
 
         try {
-<<<<<<< HEAD
-            $productsResponse = Http::get('http://product-service:8000/api/v1/products');
-            $products = collect($productsResponse->json());
-=======
             $venta = $this->procesarVentaUseCase->execute($payload);
             return response()->json([
                 'message' => 'Orden procesada exitosamente',
@@ -127,7 +123,6 @@ class OrderController extends Controller
             ], 201);
         } catch (\DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
->>>>>>> feature/hexagonal-refactor
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error al procesar la orden'], 500);
         }
