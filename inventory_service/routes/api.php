@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InsumoController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\NotaInventarioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,9 +45,30 @@ Route::middleware('auth:sanctum')->prefix('/v1')->group(function () {
     Route::get('/recetas/{id}', [ProductoController::class, 'show']);
     Route::put('/recetas/{id}', [ProductoController::class, 'update']);
     Route::delete('/recetas/{id}', [ProductoController::class, 'destroy']);
+
+    // Categorias (CRUD)
+    Route::get('/categorias', [CategoriaController::class, 'index']);
+    Route::get('/categorias/{id}', [CategoriaController::class, 'show']);
+    Route::post('/categorias', [CategoriaController::class, 'store']);
+    Route::put('/categorias/{id}', [CategoriaController::class, 'update']);
+    Route::delete('/categorias/{id}', [CategoriaController::class, 'destroy']);
+
+    // Notas de inventario (entrada/salida)
+    Route::get('/notas', [NotaInventarioController::class, 'index']);
+    Route::get('/notas/{id}', [NotaInventarioController::class, 'show']);
+    Route::post('/notas', [NotaInventarioController::class, 'store']);
+    Route::put('/notas/{id}', [NotaInventarioController::class, 'update']);
+    Route::delete('/notas/{id}', [NotaInventarioController::class, 'destroy']);
 });
 
 // Rutas públicas (sin autenticación)
 Route::prefix('/v1')->group(function () {
     Route::get('/inventory/available/{productId}', [InventoryController::class, 'getAvailableQuantity']);
 });
+
+
+// Rutas para Apertura de Caja
+Route::get('/apertura/verificar-estado', [App\Http\Controllers\AperturaController::class, 'verificarEstado']);
+Route::post('/apertura', [App\Http\Controllers\AperturaController::class, 'store']);
+
+Route::get('/apertura/actual', [App\Http\Controllers\AperturaController::class, 'estadoActual']);

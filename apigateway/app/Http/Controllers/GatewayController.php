@@ -150,19 +150,37 @@ class GatewayController extends Controller
     public function getInventoryProducts(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/v1/products', 'get');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function getInventoryProduct(Request $request, $id)
     {
         $response = $this->makeServiceRequest($request, self::INVENTORY_URL . "/api/v1/products/{$id}", 'get');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function createInventoryProduct(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/v1/products', 'post');
-        return response()->json($response->json(), $response->status());
+        return $response;
+    }
+
+    public function verificarEstadoApertura(Request $request)
+    {
+        $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/apertura/verificar-estado', 'get');
+        return $response;
+    }
+
+    public function abrirCaja(Request $request)
+    {
+        $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/apertura', 'post');
+        return $response;
+    }
+
+    public function getEstadoActualApertura(Request $request)
+    {
+        $response = $this->makeServiceRequest($request, self::INVENTORY_URL . '/api/apertura/actual', 'get');
+        return $response;
     }
 
     // ===================================================================
@@ -172,13 +190,13 @@ class GatewayController extends Controller
     public function getAvailableProducts(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::PRODUCT_URL . '/api/v1/products/available', 'get');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function searchProducts(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::PRODUCT_URL . '/api/v1/products/search', 'get');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function getCategories(Request $request)
@@ -323,25 +341,25 @@ class GatewayController extends Controller
     public function getOrders(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::ORDER_URL . '/api/v1/orders', 'get');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function createOrder(Request $request)
     {
         $response = $this->makeServiceRequest($request, self::ORDER_URL . '/api/v1/orders', 'post');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function getOrder(Request $request, $id)
     {
         $response = $this->makeServiceRequest($request, self::ORDER_URL . "/api/v1/orders/{$id}", 'get');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     public function cancelOrder(Request $request, $id)
     {
         $response = $this->makeServiceRequest($request, self::ORDER_URL . "/api/v1/orders/{$id}", 'delete');
-        return response()->json($response->json(), $response->status());
+        return $response;
     }
 
     // ===================================================================
