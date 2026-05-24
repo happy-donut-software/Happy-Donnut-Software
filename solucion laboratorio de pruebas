@@ -1,0 +1,149 @@
+SOLUCIÓN PRÁCTICA LABORATORIO DE PRUEBAS
+
+1. OBJETIVO
+- Validar el dominio del servicio de pedidos (`order_service`) aplicando DDD y arquitectura hexagonal.
+- Implementar pruebas automatizadas para el dominio independientemente de la base de datos y servicios externos.
+- Usar mocks, stubs e interfaces para aislar las pruebas.
+
+2. PASO A PASO DE LA PRÁCTICA
+
+FASE 1: ESTRATEGIA - DDD
+
+1. Documentar el Ubiquitous Language
+- Términos clave:
+  - Venta: la operación principal que representa un pedido generado y cobrado.
+  - Item/DetalleVenta: línea del pedido con producto, precio y cantidad.
+  - TotalAPagar: valor calculado que debe pagarse.
+  - DineroRecibido: dinero entregado por el cliente.
+  - VueltoAEntregar: cambio que se debe devolver.
+  - EstadoPedido: estado actual del pedido (pendiente, confirmado, cancelado, etc.).
+  - CorrelativoComprobante: identificador único de la venta.
+  - Impresora: adaptador que imprime el comprobante.
+  - Repositorio de Venta: puerto que persiste la venta.
+
+2. Identificar Eventos de Dominio
+- Eventos relevantes:
+  - VentaCreada: cuando se registra una nueva venta en el dominio.
+  - ItemAgregado: cuando se añade una línea al pedido.
+  - PagoRegistrado: cuando se recibe el dinero del cliente.
+  - VueltoCalculado: cuando se calcula el cambio.
+  - EstadoPedidoCambiado: cuando el pedido cambia de estado.
+- Prioridad: primero asegurar que la lógica de cálculo y validación sea correcta; luego documentar los eventos.
+
+3. Definir Bounded Contexts
+- Contexto de Pedido / Venta: lógica de negocio de ventas, items, pagos y estados.
+- Contexto de Infraestructura: persistencia de ventas, envío a impresora, adaptadores Eloquent.
+- Contexto de Cliente/Servicio externo: aquí solo se deben usar puertos, no lógica de negocio.
+
+FASE 2: BLINDAJE - PRUEBAS UNITARIAS DEL DOMINIO
+
+1. Pruebas de Value Objects
+- `TotalVenta` debe ser inmutable, validar valores numéricos y comparar por valor.
+- Ejemplos de pruebas:
+  - Crear `TotalVenta` con `123.456` y verificar `value()` devuelve `123.46`.
+  - Crear `TotalVenta` con valor negativo debe arrojar `InvalidArgumentException`.
+
+2. Pruebas de Entities
+- La entidad `Venta` representa un agregado con identidad propia.
+- Verificar:
+  - `agregarItem()` actualiza el total correctamente.
+  - `registrarPago()` lanza excepción si el dinero no cubre el total.
+  - `vueltoAEntregar()` se calcula correctamente.
+
+3. Validación de reglas del dominio
+- Reglas concretas:
+  - La orden debe tener al menos un ítem.
+  - El precio unitario no puede ser negativo.
+  - La cantidad debe ser mayor que cero.
+  - El dinero recibido debe ser igual o mayor al total.
+
+FASE 3: SIMULACRO - AISLAMIENTO MEDIANTE ARQUITECTURA HEXAGONAL
+
+1. Implementar Puertos y Adaptadores
+- Identificar puertos:
+  - `VentaRepositoryInterface`
+  - `ImpresoraPortInterface`
+- Identificar adaptadores:
+  - `EloquentVentaRepository`
+  - `ImpresoraAdapter`
+- El núcleo (`ProcesarVentaUseCase`, `Venta`, `VentaItem`) no debe depender de Eloquent ni de la impresora real.
+
+2. Uso de mocks y stubs
+- En las pruebas de `ProcesarVentaUseCase`, usar mocks para:
+  - `VentaRepositoryInterface`.
+  - `ImpresoraPortInterface`.
+- Verificar que el caso de uso llama a `save()` y `imprimir()` sin ejecutar la persistencia real.
+
+3. Aislamiento de pruebas
+- Usar `setUp()` o `beforeEach` para reiniciar datos en cada prueba.
+- Evitar contaminações de estado compartido entre casos.
+
+FASE 4: ENSAMBLAJE - PRUEBAS DE INTEGRACIÓN Y AGREGADOS
+
+1. Pruebas sobre Agregados
+- Validar la unidad de consistencia: `Venta` como agregado y `VentaItem` como parte.
+- En las pruebas de agregado, llamar a `agregarItem()` y luego a `registrarPago()`.
+
+2. Protección de invariantes
+- El agregado debe proteger invariantes internas:
+  - No permitir total negativo.
+  - No permitir pago menor que el total.
+
+3. Aplicación de CQRS (si corresponde)
+- El servicio actual no tiene modelo de lectura separado evidente.
+- Sin embargo, el uso de `toArray()` en `Venta` apoya la separación entre el modelo de escritura y la representación de lectura.
+
+3. ENTREGABLES REQUERIDOS
+
+- `Test_Plan_v1.md`: cases de prueba, eventos de dominio, bounded contexts y criterios de validación.
+- `/order_service/tests`: pruebas unitarias para Value Objects, Entities y casos de uso.
+- `coverage-report.gdoc`: reporte de cobertura y evidencia de aislamiento.
+- Documento final: consolidar los entregables en Google Docs.
+
+4. PRUEBAS IMPLEMENTADAS
+
+Se crearon pruebas iniciales para:
+- `TotalVenta`.
+- `Venta`.
+- `ProcesarVentaUseCase`.
+
+Estas pruebas cubren:
+- Validación de valores y reglas de negocio.
+- Aislamiento mediante mocks de `VentaRepositoryInterface` e `ImpresoraPortInterface`.
+- Cálculo de total y vuelto.
+
+5. EVIDENCIA RECOMENDADA (CAPTURAS DE PANTALLA)
+
+- Pon captura de pantalla de `order_service/app/Core/Application/UseCases/ProcesarVentaUseCase.php` y `order_service/tests/Unit/Application/UseCases/ProcesarVentaUseCaseTest.php`.
+- Pon captura de pantalla de `order_service/app/Core/Domain/Models/Venta.php` y `order_service/tests/Unit/Domain/Models/VentaTest.php`.
+- Pon captura de pantalla de `order_service/app/ValueObjects/TotalVenta.php` y `order_service/tests/Unit/Domain/ValueObjects/TotalVentaTest.php`.
+- Pon captura de pantalla de `order_service/app/Core/Domain/Ports/VentaRepositoryInterface.php` y `order_service/app/Core/Infrastructure/Adapters/EloquentVentaRepository.php`.
+
+6. PASOS PARA CADA PARTE
+
+Parte 1: Lenguaje común y contexto
+- Define el Ubiquitous Language en `Test_Plan_v1.md`.
+- Identifica eventos y contextos limitados.
+
+Parte 2: Value Objects y Entities
+- Implementa pruebas para `TotalVenta`, `VentaItem` y `Venta`.
+- Verifica inmutabilidad y reglas de negocio.
+
+Parte 3: Hexagonal y aislamiento
+- Implementa pruebas unitarias de `ProcesarVentaUseCase` usando mocks de puertos.
+- No uses `EloquentVentaRepository` en pruebas unitarias.
+
+Parte 4: Agregados e integración
+- Valida invariantes de agregado con pruebas de `Venta`.
+- Si haces prueba de integración, usa `DB_CONNECTION=sqlite` en memoria.
+
+7. RESULTADO ESPERADO
+
+- Una solución con pruebas limpias y aisladas.
+- Documentación de los conceptos de DDD, eventos y bounded contexts.
+- Evidencia clara de las pruebas y del aislamiento del dominio.
+
+NOTA FINAL
+- El entregable principal solicitado por la práctica se resume en este archivo y en `Test_Plan_v1.md`.
+- Para generar el reporte de cobertura, ejecuta `./vendor/bin/phpunit --coverage-html coverage` dentro de `order_service`.
+- Si deseas, puedo continuar creando el documento final de Google Docs en formato de texto.
