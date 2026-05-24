@@ -1,46 +1,11 @@
 ## 📖 Documentación del Proyecto
 
-Para mantener el código ordenado y trabajar en equipo sin romper nada, todos los desarrolladores deben seguir nuestras reglas de Git y Arquitectura:
+Para mantener el repositorio limpio y trabajar en equipo sin romper nada, sigue nuestras guías oficiales de Git:
 
-*   [Guía de Flujo de Ramas en Git](docs/git-workflow/ramas.md) 🚀
+*   [Configuración Inicial de Git](docs/git-workflow/instalacion.md) 🛠️
+*   [Guía para el Nombre de Ramas](docs/git-workflow/ramas.md) 🌿
+*   [Guía para Mensajes de Commit (DDD)](docs/git-workflow/commits.md) 💬
 *   [Arquitectura Hexagonal y Lenguaje Ubicuo (Próximamente)]()
-
----
-## 📝 Convención de Commits
-
-Para mantener un historial limpio y generar versiones automáticamente, utilizamos la especificación **Conventional Commits**.
-
-### 1. El Modelo (Sintaxis)
-
-Cada mensaje de commit debe seguir esta estructura exacta:
-
-`tipo(alcance): descripción`
-
-* **tipo**: La clase de cambio que estás haciendo (ver lista abajo).
-* **alcance**: (Opcional pero recomendado) El microservicio o módulo afectado (ej: `auth`, `frontend`, `inventory`).
-* **descripción**: Un resumen corto y claro de lo que se hizo (en imperativo, ej: "añadir", "corregir", no "añadido" o "corregí").
-
-> **Ejemplo real:** `feat(auth): implementar login con Google`
-
-### 2. Lista de Tipos de Commit
-
-Usa exclusivamente estos tipos para categorizar tus cambios:
-
-| Etiqueta | Nombre Completo | Cuándo usarlo (Propósito) |
-| :--- | :--- | :--- |
-| **`feat`** | Feature | Cuando añades una **NUEVA funcionalidad** o característica al sistema. |
-| **`fix`** | Fix | Cuando **CORRIGES un error** (*bug*) en el código. |
-| **`refactor`** | Refactor | Cuando reescribes código para mejorarlo o limpiarlo **sin cambiar su funcionalidad** externa. |
-| **`chore`** | Chore | Tareas de **mantenimiento**, configuración, scripts o actualización de dependencias. |
-| **`docs`** | Documentation | Cambios que afectan **exclusivamente a la documentación** (README, comentarios). |
-| **`test`** | Test | Cuando añades o corriges **pruebas** (unitarias, integración). |
-| **`style`** | Style | Cambios de formato (espacios, comas, indentación) que no afectan la lógica del código. |
-| **`perf`** | Performance | Cambios dedicados exclusivamente a mejorar el **rendimiento/velocidad**. |
-| **`revert`** | Revert | Cuando deshaces (reviertes) un commit anterior. |
-
-
-
-
 
 ## 🚀 Arquitectura y Servicios
 
