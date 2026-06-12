@@ -1,0 +1,77 @@
+
+services:
+  # Servicio de PHP con Laravel
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finance_service_app
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./storage/logs:/app/storage/logs
+    ports:
+      - "9000:9000"
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=happy_donut_finance
+      - DB_USERNAME=finance_user
+      - DB_PASSWORD=finance_password
+      - APP_KEY=
+      - APP_ENV=local
+      - APP_DEBUG=true
+    depends_on:
+      - postgres
+    networks:
+      - finance-network
+
+  # Servicio de PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: finance_service_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: happy_donut_finance
+      POSTGRES_USER: finance_user
+      POSTGRES_PASSWORD: finance_password
+      PGTZ: UTC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance_user -d happy_donut_finance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - finance-network
+
+  # Servicio de Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: finance_service_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./app/public:/app/public:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - finance-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  finance-network:
+    driver: bridge

@@ -3,11 +3,11 @@
 ## 🎯 Resumen Ejecutivo
 
 **Proyecto:** Sistema de gestión para microempresa panadería "Happy Donnut"  
-**Tipo:** Arquitectura de Microservicios (6 servicios independientes)  
+**Tipo:** Arquitectura de Microservicios (7 servicios independientes)  
 **Lenguajes:** PHP 8.2 (Backend), TypeScript/React (Frontend)  
 **Base de datos:** PostgreSQL 15 (centralizado)  
 **Message Queue:** RabbitMQ 3.12  
-**Puertos:** 8000-8004 (servicios), 8080 (gateway), 5440 (DB), 5672 (RabbitMQ)
+**Puertos:** 8000-8005 (servicios), 8080 (gateway), 5440 (DB), 5672 (RabbitMQ)
 
 ---
 
@@ -20,6 +20,7 @@
 | **inventory_service** | 8002 | Stock, insumos, lotes | inventory_db | checkAvailability, reserve, getAvailable |
 | **order_service** | 8003 | Órdenes, ventas, pagos | order_db | getAvailableProducts, createOrder, getOrder |
 | **email_service** | 8004 | Notificaciones y emails | email_db | send-email, log-notificaciones |
+| **finance_service** | 8005 | Gestión de finanzas y facturación | finance_db | getBalance, recordTransaction, generateReport |
 | **api_gateway** | 8080 | Proxy centralizado, Inertia | apigateway_db | register, login, getProducts, createOrder |
 
 ---
@@ -371,8 +372,8 @@ apigateway (PHP-FPM + Nginx)
   - Multi-stage build (Node + PHP)
   - Dependencias: db, rabbitmq
 
-auth_service / product_service / inventory_service / order_service / email_service
-  - Puertos: 8000-8004
+auth_service / product_service / inventory_service / order_service / email_service / finance_service
+  - Puertos: 8000-8005
   - Dependencias: db (o db + rabbitmq)
   - PHP 8.2 con extensiones Laravel
 ```

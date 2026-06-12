@@ -11,7 +11,7 @@ Este proyecto cuenta con **4 documentos de análisis detallado** que te permitir
 ### 1. 📋 **ANALISIS_ARQUITECTURA.md** (DOCUMENTO PRINCIPAL)
 **Mejor para:** Entender la arquitectura completa del proyecto  
 **Contenido:**
-- Estructura general del proyecto (6 servicios + 2 frontends)
+- Estructura general del proyecto (7 servicios + 2 frontends)
 - Análisis detallado de cada servicio (Modelos, Controladores, Métodos, Endpoints)
 - Descripción de cada clase/modelo con sus campos
 - Métodos de cada controlador con explicación de qué hace
@@ -351,7 +351,7 @@ Cuando hagas cambios al código, actualiza la documentación:
 - [ ] Leí ANALISIS_ARQUITECTURA.md
 - [ ] Entiendo DIAGRAMAS_INTERACCION.md
 - [ ] Levantué Docker con `docker-compose up --build`
-- [ ] Verifiqué que los 6 servicios estén corriendo
+- [ ] Verifiqué que los 7 servicios estén corriendo
 - [ ] Conecté a la BD en localhost:5440
 - [ ] Exploré el código de un servicio
 - [ ] Hice mi primer cambio pequeño

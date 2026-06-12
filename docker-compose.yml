@@ -122,6 +122,29 @@ services:
     ports:
       - "5444:5432"
 
+  db-finance:
+    image: postgres:16-alpine
+    container_name: happydonut-db-finance
+    restart: unless-stopped
+    volumes:
+      - db-finance-data:/var/lib/postgresql/data # Volumen dedicado
+    env_file:
+      - ./.env
+    environment:
+      - POSTGRES_DB=finance_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    networks:
+      - happydonut-net
+    healthcheck:
+      # Optimizamos el comando quitando el "-d database" y ampliando los tiempos
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5445:5432"
+
   db-apigateway:
     image: postgres:16-alpine
     container_name: happydonut-db-apigateway
@@ -143,7 +166,7 @@ services:
       timeout: 5s
       retries: 20
     ports:
-      - "5445:5432"
+      - "5446:5432"
 
   # --- APPLICATION SERVICES (Microservices) ---
 
@@ -408,8 +431,50 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  # 7. Finance Service
+  finance-service:
+    build:
+      context: ./finance_service
+      dockerfile: Dockerfile
+    container_name: finance-service-app
+    restart: unless-stopped
+    ports:
+      - "9006:8000"
+    volumes:
+      - ./finance_service:/var/www
+      - /var/www/vendor
+    env_file:    # <--- LEE EL ARCHIVO .env DE LA RAÍZ
+      - ./.env
+    environment: # <--- USA LAS VARIABLES DEL .env
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db-finance
+      - DB_PORT=5432
+      - DB_DATABASE=finance_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - CACHE_DRIVER=file
+      - QUEUE_CONNECTION=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS}
+    networks:
+      - happydonut-net
+    depends_on:
+      db-finance:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
       
-  # 7. Frontend Clientes (CRA - npm start)
+  # 8. Frontend Clientes (CRA - npm start)
   # Se servirá en el puerto 3000 interno
   frontend-clientes:
     build:
@@ -429,7 +494,7 @@ services:
     networks:
       - happydonut-net
 
-  # 8. Frontend Administrativo (Vite - npm run dev)
+  # 9. Frontend Administrativo (Vite - npm run dev)
   # Se servirá en el puerto 5173 interno
   frontend-administrativo:
     build:
@@ -470,6 +535,7 @@ volumes:
   db-inventory-data:
   db-order-data:
   db-email-data:
+  db-finance-data:
   db-apigateway-data:
   rabbitmq-data:
 
