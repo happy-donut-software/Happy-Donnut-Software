@@ -1,0 +1,30 @@
+# ADR 004: Patrones de Integración y Comunicación (API REST y RabbitMQ)
+
+## Estado
+Aceptado
+
+## Contexto
+El microservicio de Ventas no opera en el vacío. Por un lado, necesita recibir acciones en tiempo real desde la interfaz de usuario construida en React. Por otro lado, al finalizar una venta, debe notificar al microservicio de Inventario para que descuente los insumos físicos, pero sin que esta acción retrase la respuesta al cliente en la caja. Necesitamos estandarizar cómo fluyen estos datos para mantener las capas desacopladas.
+
+## Decisión
+Se establecen dos vías estrictas de comunicación para el microservicio:
+
+### 1. Comunicación Síncrona (Entrada desde React)
+* **Protocolo:** API RESTful que responde exclusivamente en formato `application/json`.
+* **Rutas:** Utilizarán plurales en minúscula (ej. `POST /api/ventas`).
+* **Controladores (Adaptadores de Entrada):** Tienen estrictamente prohibido contener lógica de negocio. Su única función es:
+  1. Recibir la petición HTTP (Request).
+  2. Empaquetar los datos en un DTO (Data Transfer Object).
+  3. Enviar el DTO al Caso de Uso (Application Service).
+  4. Retornar el código HTTP correcto (ej. `201 Created` o `400 Bad Request`).
+
+### 2. Comunicación Asíncrona (Salida hacia otros Microservicios)
+* **Protocolo:** Mensajería mediante **RabbitMQ**.
+* **Eventos de Dominio:** Cuando el Dominio ejecuta una acción crítica (ej. la entidad Venta confirma el pago), generará un evento en memoria llamado `VentaFinalizada`.
+* **Publicadores (Adaptadores de Salida):** Una vez que el Caso de Uso guarda la venta en PostgreSQL, un adaptador tomará el evento `VentaFinalizada`, lo serializará a JSON y lo publicará en un *Exchange* de RabbitMQ con una clave de enrutamiento (Routing Key) estándar, como `ventas.venta.finalizada`.
+* **Desacoplamiento:** Ventas *no sabe* ni le importa si Inventario está escuchando o si está caído. Solo publica el hecho histórico y termina su trabajo.
+
+## Consecuencias
+* **Positivo:** La interfaz en React será ultrarrápida, ya que no tiene que esperar a que el inventario se actualice para mostrar el mensaje de "Venta Exitosa".
+* **Positivo:** Resiliencia del sistema. Si el microservicio de Inventario se cae, RabbitMQ guardará el mensaje y lo procesará cuando vuelva a encenderse, sin perder datos.
+* **Negativo:** Introduce el concepto de "Consistencia Eventual", lo que significa que el stock de inventario no se actualiza en el mismo milisegundo exacto en que se hace la venta, sino unos instantes después.
