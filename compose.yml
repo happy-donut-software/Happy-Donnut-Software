@@ -1,0 +1,155 @@
+# ==============================================================================
+# MVP v1.1 - Happy Donut (Arquitectura de Microservicios con DDD)
+# ==============================================================================
+
+services:
+
+  # -----------------------------------------------------------------
+  # 1. BROKER DE MENSAJERÍA ASÍNCRONA (RabbitMQ - ADR 004)
+  # -----------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: happydonut-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # Puerto de comunicación entre microservicios
+      - "15672:15672" # Panel de administración visual (Usuario/Pass por defecto: guest/guest)
+    networks:
+      - red-happydonut
+
+  # -----------------------------------------------------------------
+  # 2. CAPA DE BASES DE DATOS DEDICADAS (PostgreSQL Aislado)
+  # -----------------------------------------------------------------
+  bd-ventas:
+    image: postgres:16-alpine
+    container_name: happydonut-bd-ventas
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      POSTGRES_DB: ventas_db
+    volumes:
+      - vol-bd-ventas:/var/lib/postgresql/data
+    networks:
+      - red-happydonut
+    ports:
+      - "5440:5432"
+
+  bd-inventario:
+    image: postgres:16-alpine
+    container_name: happydonut-bd-inventario
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      POSTGRES_DB: inventario_db
+    volumes:
+      - vol-bd-inventario:/var/lib/postgresql/data
+    networks:
+      - red-happydonut
+    ports:
+      - "5441:5432"
+
+  bd-usuarios:
+    image: postgres:16-alpine
+    container_name: happydonut-bd-usuarios
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      POSTGRES_DB: usuarios_db
+    volumes:
+      - vol-bd-usuarios:/var/lib/postgresql/data
+    networks:
+      - red-happydonut
+    ports:
+      - "5442:5432"
+
+  bd-finanzas:
+    image: postgres:16-alpine
+    container_name: happydonut-bd-finanzas
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      POSTGRES_DB: finanzas_db
+    volumes:
+      - vol-bd-finanzas:/var/lib/postgresql/data
+    networks:
+      - red-happydonut
+    ports:
+      - "5443:5432"
+
+  bd-tienda-virtual:
+    image: postgres:16-alpine
+    container_name: happydonut-bd-tienda-virtual
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      POSTGRES_DB: tienda_virtual_db
+    volumes:
+      - vol-bd-tienda-virtual:/var/lib/postgresql/data
+    networks:
+      - red-happydonut
+    ports:
+      - "5444:5432"
+
+  # -----------------------------------------------------------------
+  # 3. CAPA DE MICROSERVICIOS (Laravel PHP 8.2)
+  # -----------------------------------------------------------------
+  servicio-ventas:
+    build:
+      context: ./ventas  # <-- IMPORTANTE: La carpeta order_service debe renombrarse a "ventas"
+      dockerfile: Dockerfile
+    container_name: happydonut-app-ventas
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      DB_HOST: bd-ventas
+      DB_DATABASE: ventas_db
+    volumes:
+      - ./ventas:/var/www
+      - /var/www/vendor
+    depends_on:
+      - bd-ventas
+      - rabbitmq
+    networks:
+      - red-happydonut
+    ports:
+      - "9000:8000"
+    entrypoint: ["/bin/sh", "/var/www/entrypoint.sh"]
+
+  servicio-inventario:
+    build:
+      context: ./inventario # <-- IMPORTANTE: inventory_service debe renombrarse a "inventario"
+      dockerfile: Dockerfile
+    container_name: happydonut-app-inventario
+    restart: unless-stopped
+    env_file: [ "./.env" ]
+    environment:
+      DB_HOST: bd-inventario
+      DB_DATABASE: inventario_db
+    volumes:
+      - ./inventario:/var/www
+      - /var/www/vendor
+    depends_on:
+      - bd-inventario
+      - rabbitmq
+    networks:
+      - red-happydonut
+    ports:
+      - "9001:8000"
+    entrypoint: ["/bin/sh", "/var/www/entrypoint.sh"]
+
+  # Nota: A medida que construyamos los otros 3 contextos (Usuarios, Finanzas, Tienda Virtual), 
+  # agregaremos sus bloques aquí siguiendo exactamente el mismo formato.
+
+# -----------------------------------------------------------------
+# 4. REDES Y VOLÚMENES GLOBALES
+# -----------------------------------------------------------------
+networks:
+  red-happydonut:
+    driver: bridge
+
+volumes:
+  vol-bd-ventas:
+  vol-bd-inventario:
+  vol-bd-usuarios:
+  vol-bd-finanzas:
+  vol-bd-tienda-virtual:
