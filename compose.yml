@@ -12,25 +12,37 @@ services:
     container_name: happydonut-rabbitmq
     restart: unless-stopped
     ports:
-      - "5672:5672"   # Puerto de comunicación entre microservicios
-      - "15672:15672" # Panel de administración visual (Usuario/Pass por defecto: guest/guest)
+      - "5672:5672"   # Puerto para comunicación entre apps
+      - "15672:15672" # Panel de administración web (http://localhost:15672)
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
+    volumes:
+      - vol-rabbitmq:/var/lib/rabbitmq
     networks:
       - red-happydonut
 
   # -----------------------------------------------------------------
-  # 2. CAPA DE BASES DE DATOS DEDICADAS (PostgreSQL Aislado)
+  # 2. SERVIDORES DE BASE DE DATOS DEDICADOS (1 por Microservicio)
   # -----------------------------------------------------------------
   bd-ventas:
     image: postgres:16-alpine
     container_name: happydonut-bd-ventas
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      POSTGRES_DB: ventas_db
     volumes:
       - vol-bd-ventas:/var/lib/postgresql/data
+    env_file: [ "./.env" ]
+    environment:
+      - POSTGRES_DB=ventas_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
     ports:
       - "5440:5432"
 
@@ -38,13 +50,20 @@ services:
     image: postgres:16-alpine
     container_name: happydonut-bd-inventario
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      POSTGRES_DB: inventario_db
     volumes:
       - vol-bd-inventario:/var/lib/postgresql/data
+    env_file: [ "./.env" ]
+    environment:
+      - POSTGRES_DB=inventario_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
     ports:
       - "5441:5432"
 
@@ -52,13 +71,20 @@ services:
     image: postgres:16-alpine
     container_name: happydonut-bd-usuarios
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      POSTGRES_DB: usuarios_db
     volumes:
       - vol-bd-usuarios:/var/lib/postgresql/data
+    env_file: [ "./.env" ]
+    environment:
+      - POSTGRES_DB=usuarios_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
     ports:
       - "5442:5432"
 
@@ -66,13 +92,20 @@ services:
     image: postgres:16-alpine
     container_name: happydonut-bd-finanzas
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      POSTGRES_DB: finanzas_db
     volumes:
       - vol-bd-finanzas:/var/lib/postgresql/data
+    env_file: [ "./.env" ]
+    environment:
+      - POSTGRES_DB=finanzas_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
     ports:
       - "5443:5432"
 
@@ -80,13 +113,20 @@ services:
     image: postgres:16-alpine
     container_name: happydonut-bd-tienda-virtual
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      POSTGRES_DB: tienda_virtual_db
     volumes:
       - vol-bd-tienda-virtual:/var/lib/postgresql/data
+    env_file: [ "./.env" ]
+    environment:
+      - POSTGRES_DB=tienda_virtual_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
     ports:
       - "5444:5432"
 
@@ -95,61 +135,201 @@ services:
   # -----------------------------------------------------------------
   servicio-ventas:
     build:
-      context: ./ventas  # <-- IMPORTANTE: La carpeta order_service debe renombrarse a "ventas"
+      context: ./ventas
       dockerfile: Dockerfile
     container_name: happydonut-app-ventas
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      DB_HOST: bd-ventas
-      DB_DATABASE: ventas_db
+    ports:
+      - "9000:8000"
     volumes:
       - ./ventas:/var/www
       - /var/www/vendor
+    env_file: [ "./.env" ]
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=bd-ventas
+      - DB_PORT=5432
+      - DB_DATABASE=ventas_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - QUEUE_CONNECTION=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
-      - bd-ventas
-      - rabbitmq
+      bd-ventas:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - red-happydonut
-    ports:
-      - "9000:8000"
-    entrypoint: ["/bin/sh", "/var/www/entrypoint.sh"]
 
   servicio-inventario:
     build:
-      context: ./inventario # <-- IMPORTANTE: inventory_service debe renombrarse a "inventario"
+      context: ./inventario
       dockerfile: Dockerfile
     container_name: happydonut-app-inventario
     restart: unless-stopped
-    env_file: [ "./.env" ]
-    environment:
-      DB_HOST: bd-inventario
-      DB_DATABASE: inventario_db
+    ports:
+      - "9001:8000"
     volumes:
       - ./inventario:/var/www
       - /var/www/vendor
+    env_file: [ "./.env" ]
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=bd-inventario
+      - DB_PORT=5432
+      - DB_DATABASE=inventario_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - QUEUE_CONNECTION=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
-      - bd-inventario
-      - rabbitmq
+      bd-inventario:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
     networks:
       - red-happydonut
+
+  servicio-usuarios:
+    build:
+      context: ./usuarios
+      dockerfile: Dockerfile
+    container_name: happydonut-app-usuarios
+    restart: unless-stopped
     ports:
-      - "9001:8000"
-    entrypoint: ["/bin/sh", "/var/www/entrypoint.sh"]
+      - "9002:8000"
+    volumes:
+      - ./usuarios:/var/www
+      - /var/www/vendor
+    env_file: [ "./.env" ]
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=bd-usuarios
+      - DB_PORT=5432
+      - DB_DATABASE=usuarios_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      bd-usuarios:
+        condition: service_healthy
+    networks:
+      - red-happydonut
 
-  # Nota: A medida que construyamos los otros 3 contextos (Usuarios, Finanzas, Tienda Virtual), 
-  # agregaremos sus bloques aquí siguiendo exactamente el mismo formato.
+  servicio-finanzas:
+    build:
+      context: ./finanzas
+      dockerfile: Dockerfile
+    container_name: happydonut-app-finanzas
+    restart: unless-stopped
+    ports:
+      - "9003:8000"
+    volumes:
+      - ./finanzas:/var/www
+      - /var/www/vendor
+    env_file: [ "./.env" ]
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=bd-finanzas
+      - DB_PORT=5432
+      - DB_DATABASE=finanzas_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      bd-finanzas:
+        condition: service_healthy
+    networks:
+      - red-happydonut
+
+  servicio-tienda-virtual:
+    build:
+      context: ./tienda-virtual
+      dockerfile: Dockerfile
+    container_name: happydonut-app-tienda-virtual
+    restart: unless-stopped
+    ports:
+      - "9004:8000"
+    volumes:
+      - ./tienda-virtual:/var/www
+      - /var/www/vendor
+    env_file: [ "./.env" ]
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=bd-tienda-virtual
+      - DB_PORT=5432
+      - DB_DATABASE=tienda_virtual_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      bd-tienda-virtual:
+        condition: service_healthy
+    networks:
+      - red-happydonut
+
+  # -----------------------------------------------------------------
+  # 4. CAPA DE FRONTENDS (React / Vite)
+  # -----------------------------------------------------------------
+  frontend-clientes:
+    build:
+      context: ./frontend-clientes
+      dockerfile: Dockerfile
+    container_name: happydonut-frontend-clientes
+    restart: unless-stopped
+    volumes:
+      - ./frontend-clientes:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000" 
+    environment:
+      - PORT=3000
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
+    networks:
+      - red-happydonut
+
+  frontend-administrativo:
+    build:
+      context: ./frontend-administrativo
+      dockerfile: Dockerfile
+    container_name: happydonut-frontend-administrativo
+    restart: unless-stopped
+    volumes:
+      - ./frontend-administrativo:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_PORT=5173
+    networks:
+      - red-happydonut
 
 # -----------------------------------------------------------------
-# 4. REDES Y VOLÚMENES GLOBALES
+# REDES Y VOLÚMENES GLOBALES
 # -----------------------------------------------------------------
-networks:
-  red-happydonut:
-    driver: bridge
-
 volumes:
-  vol-bd-ventas:
+  vol-bd-ventas: 
   vol-bd-inventario:
   vol-bd-usuarios:
   vol-bd-finanzas:
   vol-bd-tienda-virtual:
+  vol-rabbitmq:
+
+networks:
+  red-happydonut:
+    driver: bridge
