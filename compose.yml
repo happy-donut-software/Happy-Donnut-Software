@@ -149,6 +149,8 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-ventas
       - DB_PORT=5432
@@ -184,6 +186,8 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-inventario
       - DB_PORT=5432
@@ -219,6 +223,8 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-usuarios
       - DB_PORT=5432
@@ -247,6 +253,8 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-finanzas
       - DB_PORT=5432
@@ -275,6 +283,8 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
+      - SESSION_DRIVER=file
+      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-tienda-virtual
       - DB_PORT=5432
