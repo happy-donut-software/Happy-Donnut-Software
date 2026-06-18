@@ -137,6 +137,7 @@ services:
     build:
       context: ./ventas
       dockerfile: Dockerfile
+      target: local
     container_name: happydonut-app-ventas
     restart: unless-stopped
     ports:
@@ -171,6 +172,7 @@ services:
     build:
       context: ./inventario
       dockerfile: Dockerfile
+      target: local
     container_name: happydonut-app-inventario
     restart: unless-stopped
     ports:
@@ -205,6 +207,7 @@ services:
     build:
       context: ./usuarios
       dockerfile: Dockerfile
+      target: local
     container_name: happydonut-app-usuarios
     restart: unless-stopped
     ports:
@@ -232,6 +235,7 @@ services:
     build:
       context: ./finanzas
       dockerfile: Dockerfile
+      target: local
     container_name: happydonut-app-finanzas
     restart: unless-stopped
     ports:
@@ -259,6 +263,7 @@ services:
     build:
       context: ./tienda-virtual
       dockerfile: Dockerfile
+      target: local
     container_name: happydonut-app-tienda-virtual
     restart: unless-stopped
     ports:
