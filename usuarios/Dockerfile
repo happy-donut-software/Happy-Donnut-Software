@@ -1,7 +1,7 @@
 # ==============================================================================
 # STAGE 1: Base (Dependencias y extensiones comunes)
 # ==============================================================================
-FROM php:8.2-fpm-alpine AS base
+FROM php:8.4-fpm-alpine AS base
 
 # Instalar dependencias del sistema requeridas por Laravel, Postgres y colas
 RUN apk add --no-cache \
@@ -24,13 +24,21 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Configurar el directorio de trabajo
 WORKDIR /var/www
 
+# LA MAGIA: Copiamos archivos de dependencias y las instalamos en la base
+# Esto garantiza que la carpeta vendor exista DENTRO de la imagen antes de que
+# Docker monte el volumen anónimo en la etapa local.
+COPY composer.json composer.lock ./
+RUN composer install --ignore-platform-reqs --no-interaction --no-scripts
+
 # ==============================================================================
 # STAGE 2: Desarrollo / Local
 # ==============================================================================
 FROM base AS local
 
+# Copiamos el código (aunque se sobreescriba con el volumen de Windows, es buena práctica)
+COPY . .
+
 # En desarrollo, usamos el servidor interno de Laravel (artisan serve)
-# Esto permite que los volúmenes mapeados desde tu PC reflejen los cambios en tiempo real.
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 
 # ==============================================================================
@@ -38,12 +46,11 @@ CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 # ==============================================================================
 FROM base AS build
 
-# Copiamos SOLO los archivos de dependencias primero (Aprovecha la caché de Docker)
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
-
 # Copiamos el resto del código fuente del microservicio
 COPY . .
+
+# Optimizamos dependencias para producción (reinstalamos sin dev)
+RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
 # Optimizamos Laravel para producción (rutas, vistas y configuración en caché)
 RUN php artisan config:cache && \
