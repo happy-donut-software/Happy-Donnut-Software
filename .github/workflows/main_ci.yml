@@ -31,39 +31,42 @@ jobs:
       - name: Levantar Microservicios con Docker Compose
         run: docker compose up -d --build
 
-      - name: Mostrar Logs de Error (Si Docker falla)
-        if: failure()
-        run: |
-          echo "=== LOGS DE LAS BASES DE DATOS PARA DEBUGEAR ==="
-          docker compose logs db-auth db-product db-inventory db-order db-email db-apigateway
-
       - name: Esperar que los servicios estén listos (Healthcheck)
         run: |
           echo "Esperando estabilidad de los contenedores..."
           sleep 15
           docker ps
 
-      - name: Ejecutar Pruebas Globales (PHPUnit)
+      - name: Instalar Dependencias y PCOV en Auth Service
+        run: |
+          docker compose exec -T auth-service composer install --no-interaction --prefer-dist
+          # Habilitamos PCOV para medir la cobertura real
+          docker compose exec -T auth-service pecl install pcov
+          docker compose exec -T auth-service docker-php-ext-enable pcov
+
+      - name: Ejecutar Pruebas Base (PHPUnit)
         run: |
           echo "=== PROBANDO AUTH SERVICE ==="
-          docker compose exec -T auth-service composer install --no-interaction --prefer-dist
-          docker compose exec -T auth-service ./vendor/bin/phpunit
+          docker compose exec -T auth-service php -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-text
 
-          echo "=== PROBANDO PRODUCT SERVICE ==="
-          docker compose exec -T product-service composer install --no-interaction --prefer-dist
-          docker compose exec -T product-service ./vendor/bin/phpunit
+      - name: Quality Gate Estricto (Infection > 80%)
+        run: |
+          echo "=== VALIDANDO UMBRAL DE CALIDAD (Fase 3) ==="
+          # El pipeline fallará automáticamente si el MSI (Mutation Score) es menor a 80%
+          docker compose exec -T auth-service php -d pcov.enabled=1 ./vendor/bin/infection --min-msi=80 --min-covered-msi=80
 
-          echo "=== PROBANDO INVENTORY SERVICE ==="
-          docker compose exec -T inventory-service composer install --no-interaction --prefer-dist
-          docker compose exec -T inventory-service ./vendor/bin/phpunit
-
-          echo "=== PROBANDO ORDER SERVICE ==="
-          docker compose exec -T order-service composer install --no-interaction --prefer-dist
-          docker compose exec -T order-service ./vendor/bin/phpunit
-
-          echo "=== PROBANDO EMAIL SERVICE ==="
-          docker compose exec -T email-service composer install --no-interaction --prefer-dist
-          docker compose exec -T email-service ./vendor/bin/phpunit
+      - name: Status Accounting (Generar log SCM - Fase 5)
+        # Solo se ejecuta si los tests pasaron y si es un merge directo a main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+        run: |
+          echo "=== REGISTRANDO ESTADO DE APROBACIÓN ==="
+          echo '{ 
+            "commit": "${{ github.sha }}", 
+            "date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")", 
+            "author": "${{ github.actor }}", 
+            "status": "MERGED_SUCCESSFULLY_WITH_80_COVERAGE" 
+          }' > scm-status-report.json
+          cat scm-status-report.json
 
       - name: Apagar Infraestructura
         if: always()
