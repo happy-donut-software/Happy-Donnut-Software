@@ -1,0 +1,109 @@
+name: SCM Audit Log
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  update-scm-audit:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update SCM audit log in branch "scm-audit"
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const auditBranch = 'scm-audit';
+            const filePath = 'scm-status-report.json';
+
+            // 1) Obtener reviews para contar aprobaciones y nombres
+            const reviewsRes = await github.rest.pulls.listReviews({
+              owner,
+              repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+            const approvals = reviewsRes.data.filter(r => r.state === 'APPROVED');
+            const approvers = Array.from(new Set(approvals.map(a => a.user?.login).filter(Boolean)));
+
+            // 2) Construir la entrada de auditoría
+            const entry = {
+              pr_number: pr.number,
+              title: pr.title,
+              author: pr.user?.login,
+              merged_by: pr.merged_by?.login,
+              merge_commit_sha: pr.merge_commit_sha,
+              merged_at: pr.merged_at,
+              base: pr.base?.ref,
+              head: pr.head?.ref,
+              approvals_count: approvers.length,
+              approvers,
+              url: pr.html_url,
+              recorded_at: (new Date()).toISOString()
+            };
+
+            // 3) Asegurar existencia de la rama secundaria (crear si no existe)
+            let branchExists = true;
+            try {
+              await github.rest.git.getRef({
+                owner, repo, ref: `heads/${auditBranch}`
+              });
+            } catch (err) {
+              branchExists = false;
+            }
+
+            if (!branchExists) {
+              const repoInfo = await github.rest.repos.get({ owner, repo });
+              const defaultBranch = repoInfo.data.default_branch;
+              const defaultRef = await github.rest.git.getRef({
+                owner, repo, ref: `heads/${defaultBranch}`
+              });
+              await github.rest.git.createRef({
+                owner, repo, ref: `refs/heads/${auditBranch}`,
+                sha: defaultRef.data.object.sha
+              });
+              core.info(`Created branch ${auditBranch} from ${defaultBranch}`);
+            }
+
+            // 4) Leer archivo existente (si existe) desde la rama auditBranch
+            let currentList = [];
+            let currentSha = undefined;
+            try {
+              const getRes = await github.rest.repos.getContent({
+                owner, repo, path: filePath, ref: auditBranch
+              });
+              const content = Buffer.from(getRes.data.content, getRes.data.encoding).toString();
+              currentList = JSON.parse(content);
+              currentSha = getRes.data.sha;
+            } catch (err) {
+              // No existe el archivo -> empezamos con array vacío
+              currentList = [];
+            }
+
+            // 5) Añadir la entrada y escribir el fichero (pretty JSON)
+            currentList.push(entry);
+            const newContent = Buffer.from(JSON.stringify(currentList, null, 2)).toString('base64');
+
+            // 6) Commit / push a la rama auditBranch
+            await github.rest.repos.createOrUpdateFileContents({
+              owner,
+              repo,
+              path: filePath,
+              message: `SCM audit: registrar PR #${pr.number}`,
+              content: newContent,
+              branch: auditBranch,
+              sha: currentSha // undefined si no existía
+            });
+
+            return `Audit log updated in ${auditBranch}: ${filePath}`;
