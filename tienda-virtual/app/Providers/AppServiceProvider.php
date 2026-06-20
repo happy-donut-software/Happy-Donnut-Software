@@ -3,20 +3,20 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Dominio\Puertos\CarritoRepositoryInterface;
+use App\Infraestructura\Persistencia\Repositorios\EloquentCarritoRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        // Inyectamos la implementación de Eloquent cuando soliciten el Repositorio del Carrito
+        $this->app->bind(
+            CarritoRepositoryInterface::class,
+            EloquentCarritoRepository::class
+        );
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         //
