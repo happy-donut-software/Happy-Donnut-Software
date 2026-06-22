@@ -5,7 +5,7 @@
 services:
 
   # -----------------------------------------------------------------
-  # 1. BROKER DE MENSAJERÍA ASÍNCRONA (RabbitMQ - ADR 004)
+  # 1. BROKER DE MENSAJERÍA ASÍNCRONA (RabbitMQ)
   # -----------------------------------------------------------------
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -23,7 +23,7 @@ services:
       - red-happydonut
 
   # -----------------------------------------------------------------
-  # 2. SERVIDORES DE BASE DE DATOS DEDICADOS (1 por Microservicio)
+  # 2. SERVIDORES DE BASE DE DATOS DEDICADOS
   # -----------------------------------------------------------------
   bd-ventas:
     image: postgres:16-alpine
@@ -34,12 +34,10 @@ services:
     env_file: [ "./.env" ]
     environment:
       - POSTGRES_DB=ventas_db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ventas_db"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -55,12 +53,10 @@ services:
     env_file: [ "./.env" ]
     environment:
       - POSTGRES_DB=inventario_db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d inventario_db"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -76,12 +72,10 @@ services:
     env_file: [ "./.env" ]
     environment:
       - POSTGRES_DB=usuarios_db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d usuarios_db"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -97,12 +91,10 @@ services:
     env_file: [ "./.env" ]
     environment:
       - POSTGRES_DB=finanzas_db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d finanzas_db"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -118,12 +110,10 @@ services:
     env_file: [ "./.env" ]
     environment:
       - POSTGRES_DB=tienda_virtual_db
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - red-happydonut
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d tienda_virtual_db"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -131,12 +121,11 @@ services:
       - "5444:5432"
 
   # -----------------------------------------------------------------
-  # 3. CAPA DE MICROSERVICIOS (Laravel PHP 8.2)
+  # 3. CAPA DE MICROSERVICIOS (Laravel PHP)
   # -----------------------------------------------------------------
   servicio-ventas:
     build:
       context: ./ventas
-      dockerfile: Dockerfile
       target: local
     container_name: happydonut-app-ventas
     restart: unless-stopped
@@ -147,21 +136,16 @@ services:
       - /var/www/vendor
     env_file: [ "./.env" ]
     environment:
+      - APP_KEY=${VENTAS_APP_KEY}
       - APP_ENV=local
       - APP_DEBUG=true
-      - SESSION_DRIVER=file
-      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-ventas
       - DB_PORT=5432
       - DB_DATABASE=ventas_db
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
       bd-ventas:
         condition: service_healthy
@@ -173,7 +157,6 @@ services:
   servicio-inventario:
     build:
       context: ./inventario
-      dockerfile: Dockerfile
       target: local
     container_name: happydonut-app-inventario
     restart: unless-stopped
@@ -184,21 +167,16 @@ services:
       - /var/www/vendor
     env_file: [ "./.env" ]
     environment:
+      - APP_KEY=${INVENTARIO_APP_KEY}
       - APP_ENV=local
       - APP_DEBUG=true
-      - SESSION_DRIVER=file
-      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-inventario
       - DB_PORT=5432
       - DB_DATABASE=inventario_db
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
       bd-inventario:
         condition: service_healthy
@@ -210,7 +188,6 @@ services:
   servicio-usuarios:
     build:
       context: ./usuarios
-      dockerfile: Dockerfile
       target: local
     container_name: happydonut-app-usuarios
     restart: unless-stopped
@@ -221,16 +198,13 @@ services:
       - /var/www/vendor
     env_file: [ "./.env" ]
     environment:
+      - APP_KEY=${USUARIOS_APP_KEY}
       - APP_ENV=local
       - APP_DEBUG=true
-      - SESSION_DRIVER=file
-      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-usuarios
       - DB_PORT=5432
       - DB_DATABASE=usuarios_db
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       bd-usuarios:
         condition: service_healthy
@@ -240,7 +214,6 @@ services:
   servicio-finanzas:
     build:
       context: ./finanzas
-      dockerfile: Dockerfile
       target: local
     container_name: happydonut-app-finanzas
     restart: unless-stopped
@@ -251,16 +224,13 @@ services:
       - /var/www/vendor
     env_file: [ "./.env" ]
     environment:
+      - APP_KEY=${FINANZAS_APP_KEY}
       - APP_ENV=local
       - APP_DEBUG=true
-      - SESSION_DRIVER=file
-      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-finanzas
       - DB_PORT=5432
       - DB_DATABASE=finanzas_db
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       bd-finanzas:
         condition: service_healthy
@@ -270,7 +240,6 @@ services:
   servicio-tienda-virtual:
     build:
       context: ./tienda-virtual
-      dockerfile: Dockerfile
       target: local
     container_name: happydonut-app-tienda-virtual
     restart: unless-stopped
@@ -281,16 +250,13 @@ services:
       - /var/www/vendor
     env_file: [ "./.env" ]
     environment:
+      - APP_KEY=${TIENDA_APP_KEY}
       - APP_ENV=local
       - APP_DEBUG=true
-      - SESSION_DRIVER=file
-      - CACHE_STORE=file
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-tienda-virtual
       - DB_PORT=5432
       - DB_DATABASE=tienda_virtual_db
-      - DB_USERNAME=${POSTGRES_USER}
-      - DB_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       bd-tienda-virtual:
         condition: service_healthy
@@ -303,7 +269,6 @@ services:
   frontend-clientes:
     build:
       context: ./frontend-clientes
-      dockerfile: Dockerfile
     container_name: happydonut-frontend-clientes
     restart: unless-stopped
     volumes:
@@ -321,7 +286,6 @@ services:
   frontend-administrativo:
     build:
       context: ./frontend-administrativo
-      dockerfile: Dockerfile
     container_name: happydonut-frontend-administrativo
     restart: unless-stopped
     volumes:

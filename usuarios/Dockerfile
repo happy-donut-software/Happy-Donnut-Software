@@ -12,11 +12,12 @@ RUN apk add --no-cache \
     git \
     curl \
     oniguruma-dev \
-    linux-headers
+    linux-headers \
+    icu-dev
 
 # Instalar extensiones de PHP 
 # NOTA: pdo_pgsql es para BD, sockets es VITAL para la conexión estable con RabbitMQ
-RUN docker-php-ext-install pdo_pgsql mbstring zip exif pcntl sockets
+RUN docker-php-ext-install pdo_pgsql mbstring zip exif pcntl sockets intl
 
 # Obtener Composer en su última versión oficial
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -35,7 +36,7 @@ RUN composer install --ignore-platform-reqs --no-interaction --no-scripts
 # ==============================================================================
 FROM base AS local
 
-# Copiamos el código (aunque se sobreescriba con el volumen de Windows, es buena práctica)
+# Copiamos el código (aunque se sobreescriba con el volumen, es buena práctica)
 COPY . .
 
 # En desarrollo, usamos el servidor interno de Laravel (artisan serve)
@@ -46,7 +47,6 @@ CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 # ==============================================================================
 FROM base AS build
 
-# Copiamos el resto del código fuente del microservicio
 COPY . .
 
 # Optimizamos dependencias para producción (reinstalamos sin dev)
@@ -71,6 +71,6 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 # Cambiamos al usuario no privilegiado por seguridad
 USER www-data
 
-# En producción, usamos el motor robusto PHP-FPM en lugar de artisan serve
+# En producción, usamos el motor robusto PHP-FPM
 EXPOSE 9000
 CMD ["php-fpm"]
