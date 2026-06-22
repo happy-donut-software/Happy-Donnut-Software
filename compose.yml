@@ -143,6 +143,8 @@ services:
       - DB_HOST=bd-ventas
       - DB_PORT=5432
       - DB_DATABASE=ventas_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
@@ -174,6 +176,8 @@ services:
       - DB_HOST=bd-inventario
       - DB_PORT=5432
       - DB_DATABASE=inventario_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
@@ -205,6 +209,8 @@ services:
       - DB_HOST=bd-usuarios
       - DB_PORT=5432
       - DB_DATABASE=usuarios_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       bd-usuarios:
         condition: service_healthy
@@ -231,6 +237,8 @@ services:
       - DB_HOST=bd-finanzas
       - DB_PORT=5432
       - DB_DATABASE=finanzas_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       bd-finanzas:
         condition: service_healthy
@@ -257,6 +265,8 @@ services:
       - DB_HOST=bd-tienda-virtual
       - DB_PORT=5432
       - DB_DATABASE=tienda_virtual_db
+      - DB_USERNAME=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       bd-tienda-virtual:
         condition: service_healthy
