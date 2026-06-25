@@ -84,4 +84,9 @@ class OrdenVenta
 
         $this->estado = EstadoOrden::CANCELADA;
     }
+    
+    public function obtenerFechaCreacion(): DateTimeImmutable
+    {
+        return $this->fechaCreacion;
+    }
 }

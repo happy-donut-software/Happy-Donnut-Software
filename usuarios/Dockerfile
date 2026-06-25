@@ -13,7 +13,8 @@ RUN apk add --no-cache \
     curl \
     oniguruma-dev \
     linux-headers \
-    icu-dev
+    icu-dev \
+    intl 
 
 # Instalar extensiones de PHP 
 # NOTA: pdo_pgsql es para BD, sockets es VITAL para la conexión estable con RabbitMQ

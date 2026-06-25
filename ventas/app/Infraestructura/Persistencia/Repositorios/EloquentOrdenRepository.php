@@ -58,7 +58,7 @@ class EloquentOrdenRepository implements OrdenRepositoryInterface
         $orden = new OrdenVenta(
             $modelo->id,
             $modelo->cliente_id,
-            new DateTimeImmutable($modelo->fecha_creacion),
+            new DateTimeImmutable($modelo->fecha_creacion->toDateTimeString()),
             EstadoOrden::from($modelo->estado)
         );
 
