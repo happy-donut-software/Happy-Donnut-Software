@@ -148,6 +148,8 @@ services:
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
+      - CACHE_STORE=file
+      - SESSION_DRIVER=file
     depends_on:
       bd-ventas:
         condition: service_healthy
@@ -181,6 +183,8 @@ services:
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
+      - CACHE_STORE=file
+      - SESSION_DRIVER=file
     depends_on:
       bd-inventario:
         condition: service_healthy
@@ -211,6 +215,8 @@ services:
       - DB_DATABASE=usuarios_db
       - DB_USERNAME=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - CACHE_STORE=file
+      - SESSION_DRIVER=file
     depends_on:
       bd-usuarios:
         condition: service_healthy
@@ -239,6 +245,8 @@ services:
       - DB_DATABASE=finanzas_db
       - DB_USERNAME=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - CACHE_STORE=file
+      - SESSION_DRIVER=file
     depends_on:
       bd-finanzas:
         condition: service_healthy
@@ -267,6 +275,8 @@ services:
       - DB_DATABASE=tienda_virtual_db
       - DB_USERNAME=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - CACHE_STORE=file
+      - SESSION_DRIVER=file
     depends_on:
       bd-tienda-virtual:
         condition: service_healthy
