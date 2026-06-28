@@ -12,6 +12,7 @@ enum RolUsuario: string
     case ADMIN = 'admin';       // Dueño / Gerente (Acceso total a finanzas, inventario)
     case CAJERO = 'cajero';     // Empleado de mostrador (Abre caja, hace ventas)
     case CLIENTE = 'cliente';   // Compra por la tienda virtual
+    case COLABORADOR = 'colaborador'; // Rol general
 
     public function esAdmin(): bool
     {
@@ -21,5 +22,10 @@ enum RolUsuario: string
     public function esCajero(): bool
     {
         return $this === self::CAJERO;
+    }
+    
+    public function esColaborador(): bool
+    {
+        return $this === self::COLABORADOR;
     }
 }
