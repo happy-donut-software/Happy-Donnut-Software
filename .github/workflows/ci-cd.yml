@@ -1,0 +1,74 @@
+name: CI/CD GitOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - exmain
+    # Opcional: También puede activarse al crear un tag (ej. v1.0.0)
+    # tags:
+    #   - 'v*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código (App Repo)
+        uses: actions/checkout@v3
+
+      - name: Generar Versión (SemVer)
+        id: version
+        # Genera un tag único basado en la fecha y el commit SHA para evitar "latest"
+        run: |
+          VERSION="v1.0.$(date +'%Y%m%d')-${GITHUB_SHA::7}"
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "Construyendo versión: $VERSION"
+
+      - name: Iniciar sesión en Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Construir y Subir Imagen Docker
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          # IMPORTANTE: Reemplaza "pedidos-api" por el nombre de tu imagen
+          tags: ${{ secrets.DOCKER_USERNAME }}/pedidos-api:${{ steps.version.outputs.tag }}
+          push: true
+
+      - name: Checkout del Repositorio GitOps (Config Repo)
+        uses: actions/checkout@v3
+        with:
+          # IMPORTANTE: Reemplaza con la URL o usuario/repo de tu repositorio de configuración
+          repository: 'happy-donut-software/configuracion'
+          # Se necesita un token con permisos para escribir en el repo de configuración
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: config-repo
+
+      - name: Actualizar tag de la imagen en deployment.yaml
+        run: |
+          # Navegamos a la carpeta donde está el deployment
+          cd config-repo/k8s/desarrollo
+          
+          # Mostramos el archivo antes del cambio para depuración
+          echo "--- Antes ---"
+          cat deployment.yaml
+          
+          # Actualizamos el tag de la imagen usando sed
+          # Busca la línea de la imagen y cambia su tag.
+          sed -i "s|image: .*:.*|image: ${{ secrets.DOCKER_USERNAME }}/pedidos-api:${{ steps.version.outputs.tag }}|g" deployment.yaml
+          
+          echo "--- Después ---"
+          cat deployment.yaml
+
+      - name: Commit y Push al Repositorio GitOps
+        run: |
+          cd config-repo
+          git config --global user.name "GitHub Actions CI"
+          git config --global user.email "actions@github.com"
+          git add k8s/desarrollo/deployment.yaml
+          
+          # Hacemos commit solo si hay cambios
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: actualizando imagen a versión ${{ steps.version.outputs.tag }}" && git push)
