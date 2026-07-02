@@ -5,15 +5,12 @@ import { Label } from "../ui/label";
 import logoImage from "figma:asset/59d28967ce75ac74e6d8777b6505de4c2ba7cb58.png";
 import { toast } from "sonner";
 
+// IMPORTAMOS LA NUEVA CONFIGURACIÓN
+import { API_CONFIG, buildURL } from "../../src/config/api.config"; 
+
 interface LoginProps {
   onLogin: (usuario: string, rol: "Administrador" | "Empleado") => void;
 }
-
-// Usuarios del sistema
-const USUARIOS = [
-  { usuario: "admin", contraseña: "admin123", rol: "Administrador" as const },
-  { usuario: "empleado", contraseña: "emp123", rol: "Empleado" as const }
-];
 
 export function Login({ onLogin }: LoginProps) {
   const [usuario, setUsuario] = useState("");
@@ -36,12 +33,17 @@ export function Login({ onLogin }: LoginProps) {
     setIsLoading(true);
 
     try {
-      console.log('Intentando login con:', { email: usuario, password: '***' });
+      // 1. Construimos la URL dinámica usando nuestro helper
+      const url = buildURL(API_CONFIG.services.usuarios, API_CONFIG.endpoints.auth.login);
       
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      console.log('Intentando login en:', url);
+      
+      // 2. Hacemos la petición
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json' // Importante para que Laravel devuelva JSON en caso de error de validación
         },
         body: JSON.stringify({
           email: usuario,
@@ -49,22 +51,29 @@ export function Login({ onLogin }: LoginProps) {
         })
       });
 
-      console.log('Respuesta status:', response.status);
       const data = await response.json();
-      console.log('Respuesta data:', data);
 
       if (response.ok) {
-        // Guardar token real del auth service
+        // 3. Guardar token y perfil del usuario
         if (data.access_token) {
           localStorage.setItem('auth_token', data.access_token);
-          console.log('Token guardado:', data.access_token);
+          // Opcional: guardar los datos del usuario para mostrarlos en el Dashboard
+          if (data.usuario) {
+            localStorage.setItem('user_profile', JSON.stringify(data.usuario));
+          }
         }
         
-        toast.success(`Bienvenido, ${usuario}`);
-        console.log('Llamando a onLogin...');
-        onLogin(usuario, "Administrador");
+        // Usamos el nombre real del backend si viene, sino el correo
+        const nombreMostrar = data.usuario?.nombre || usuario;
+        toast.success(`Bienvenido, ${nombreMostrar}`);
+        
+        // 4. Adaptamos el rol del backend ("admin", "cajero") al que espera tu prop onLogin
+        const rolAsignado = data.usuario?.rol === 'admin' ? "Administrador" : "Empleado";
+        onLogin(usuario, rolAsignado);
+
       } else {
-        toast.error(data.message || "Usuario o contraseña incorrectos");
+        // Mostramos el error exacto que envía Laravel (o uno genérico)
+        toast.error(data.message || data.error || "Usuario o contraseña incorrectos");
       }
     } catch (error) {
       console.error('Error de login:', error);
@@ -121,7 +130,7 @@ export function Login({ onLogin }: LoginProps) {
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-8">
-          © 2025 HappyDonuts. Todos los derechos reservados.
+          © 2026 HappyDonuts. Todos los derechos reservados.
         </p>
       </div>
     </div>

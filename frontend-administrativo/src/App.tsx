@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 👈 Aseguramos que useEffect esté importado arriba
 import { Dashboard } from "./components/views/Dashboard";
 import { Comprobantes } from "./components/views/Comprobantes";
 import { NuevoComprobante } from "./components/views/NuevoComprobante";
@@ -38,12 +38,67 @@ import {
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
 
+// Importamos la configuración y helper globales
+import { API_CONFIG, buildURL } from "./src/config/api.config"; 
+
 export default function App() {
   const [showLogin, setShowLogin] = useState(true);
   const [currentView, setCurrentView] = useState("dashboard");
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [currentUser, setCurrentUser] = useState<string>("");
   const [userRole, setUserRole] = useState<"Administrador" | "Empleado">("Empleado");
+  
+  // Estados de carga e inicio de validación
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Efecto principal de validación de Sesión (/me)
+  useEffect(() => {
+    const verificarSesion = async () => {
+      const token = localStorage.getItem('auth_token');
+
+      if (!token) {
+        setShowLogin(true);
+        setIsCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const url = buildURL(API_CONFIG.services.usuarios, API_CONFIG.endpoints.auth.me);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          localStorage.setItem('user_profile', JSON.stringify(data.usuario));
+          
+          // Asignamos la información a los estados originales del Dashboard
+          setCurrentUser(data.usuario.nombre);
+          const rolVisual = data.usuario.rol === 'admin' ? "Administrador" : "Empleado";
+          setUserRole(rolVisual);
+          
+          // ¡Paso clave! Apagamos el login para dar paso al backend
+          setShowLogin(false);
+        } else {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_profile');
+          setShowLogin(true);
+        }
+      } catch (error) {
+        console.error("Error verificando sesión", error);
+        setShowLogin(true);
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    verificarSesion();
+  }, []);
 
   const handleLogin = (usuario: string, rol: "Administrador" | "Empleado") => {
     console.log('handleLogin llamado con:', { usuario, rol });
@@ -58,8 +113,8 @@ export default function App() {
   };
 
   const confirmLogout = () => {
-    // Limpiar token de autenticación
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_profile');
     
     setShowLogin(true);
     setCurrentView("dashboard");
@@ -69,83 +124,46 @@ export default function App() {
   };
 
   const renderView = () => {
-    // Verificar permisos según el rol
     const isAdmin = userRole === "Administrador";
     
     switch (currentView) {
-      case "dashboard":
-        return <Dashboard />;
-      
-      // VENTAS - Ambos roles
-      case "comprobantes":
-        return <Comprobantes />;
-      case "nuevo-comprobante":
-        return <NuevoComprobante />;
-      
-      // INVENTARIO - Admin (edición) / Empleado (solo lectura)
-      case "productos":
-        return <ProductosSimple />;
-      case "categorias":
-        return isAdmin ? <Categorias /> : <Dashboard />;
-      
-      // NOTAS DE ENTRADA - Solo Admin
-      case "notas-entrada":
-        return isAdmin ? <NotasEntrada /> : <Dashboard />;
-      case "nueva-nota-entrada":
-        return isAdmin ? <NuevaNotaEntrada /> : <Dashboard />;
-      
-      // NOTAS DE SALIDA - Ambos roles
-      case "notas-salida":
-        return <NotasSalida />;
-      case "nueva-nota-salida":
-        return <NuevaNotaSalida />;
-      
-      // CLIENTES Y PROVEEDORES - Solo Admin
-      case "clientes-proveedores":
-        return isAdmin ? <ClientesProveedores /> : <Dashboard />;
-      
-      // COMPRAS - Solo Admin
-      case "compras":
-        return isAdmin ? <Compras /> : <Dashboard />;
-      case "nueva-compra":
-        return isAdmin ? <NuevaCompra /> : <Dashboard />;
-      
-      // PROMOCIONES - Solo Admin
-      case "promociones":
-        return isAdmin ? <Promociones /> : <Dashboard />;
-      case "nueva-promocion":
-        return isAdmin ? <NuevaPromocion /> : <Dashboard />;
-      
-      // CAJA - Ambos roles
-      case "apertura-caja":
-        return <AperturaCaja />;
-      case "movimientos-caja":
-        return <MovimientosCaja />;
-      case "registrar-egreso":
-        return <RegistrarEgreso />;
-      case "cierre-caja":
-        return <CierreCaja />;
-      case "historial-cierres":
-        return <HistorialCierres />;
-      
-      // CONFIGURACIÓN - Solo Admin
-      case "datos-empresa":
-        return isAdmin ? <DatosEmpresa /> : <Dashboard />;
-      case "usuarios":
-        return isAdmin ? <Usuarios /> : <Dashboard />;
-      case "locales":
-        return isAdmin ? <Locales /> : <Dashboard />;
-      
-      // SOPORTE - Ambos roles
-      case "soporte":
-        return <Soporte />;
-      
-      default:
-        return <Dashboard />;
+      case "dashboard": return <Dashboard />;
+      case "comprobantes": return <Comprobantes />;
+      case "nuevo-comprobante": return <NuevoComprobante />;
+      case "productos": return <ProductosSimple />;
+      case "categorias": return isAdmin ? <Categorias /> : <Dashboard />;
+      case "notas-entrada": return isAdmin ? <NotasEntrada /> : <Dashboard />;
+      case "nueva-nota-entrada": return isAdmin ? <NuevaNotaEntrada /> : <Dashboard />;
+      case "notas-salida": return <NotasSalida />;
+      case "nueva-nota-salida": return <NuevaNotaSalida />;
+      case "clientes-proveedores": return isAdmin ? <ClientesProveedores /> : <Dashboard />;
+      case "compras": return isAdmin ? <Compras /> : <Dashboard />;
+      case "nueva-compra": return isAdmin ? <NuevaCompra /> : <Dashboard />;
+      case "promociones": return isAdmin ? <Promociones /> : <Dashboard />;
+      case "nueva-promocion": return isAdmin ? <NuevaPromocion /> : <Dashboard />;
+      case "apertura-caja": return <AperturaCaja />;
+      case "movimientos-caja": return <MovimientosCaja />;
+      case "registrar-egreso": return <RegistrarEgreso />;
+      case "cierre-caja": return <CierreCaja />;
+      case "historial-cierres": return <HistorialCierres />;
+      case "datos-empresa": return isAdmin ? <DatosEmpresa /> : <Dashboard />;
+      case "usuarios": return isAdmin ? <Usuarios /> : <Dashboard />;
+      case "locales": return isAdmin ? <Locales /> : <Dashboard />;
+      case "soporte": return <Soporte />;
+      default: return <Dashboard />;
     }
   };
 
-  // Mostrar la pantalla de login
+  // 1. PRIMER CONTROL: Si la app está verificando la firma con el Backend, congelamos la interfaz
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
+        Cargando sistema Happy Donut...
+      </div>
+    );
+  }
+
+  // 2. SEGUNDO CONTROL: Si ya terminó de cargar y determinó que debe mostrar el Login
   if (showLogin) {
     return (
       <>
@@ -155,7 +173,7 @@ export default function App() {
     );
   }
 
-  // Mostrar el sistema completo
+  // 3. RENDERIZADO FINAL: El sistema completo para usuarios con token verificado
   return (
     <SidebarProvider>
       <div className="flex w-full min-h-screen">

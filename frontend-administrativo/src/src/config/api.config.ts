@@ -1,39 +1,31 @@
 /**
  * HappyDonuts - Configuración de API y Backend
- * 
- * 🔧 Configuración para conectar con backend en el futuro
- * 
- * MODO ACTUAL: localStorage (useLocalStorage = true)
- * MODO FUTURO: Backend API (useLocalStorage = false)
+ * Separación de Entornos: Desarrollo (Docker Local) vs Producción (Dominio)
  */
 
-/**
- * 🚀 GUÍA RÁPIDA PARA CONECTAR BACKEND:
- * 
- * 1. Configura la variable de entorno VITE_API_URL en .env:
- *    VITE_API_URL=http://localhost:3000/api
- * 
- * 2. Cambia useLocalStorage a false:
- *    useLocalStorage: false
- * 
- * 3. Los servicios automáticamente usarán las APIs
- * 
- * 4. Asegúrate que tu backend tenga los endpoints listados abajo
- */
+// Vite detecta automáticamente el entorno (true si es npm run dev, false si es build)
+const isDev = import.meta.env.DEV; 
+
+// En producción usaremos la URL de tu .env (o el dominio por defecto)
+const PROD_DOMAIN = import.meta.env.VITE_API_URL || 'https://happydonut.online';
 
 export const API_CONFIG = {
   /**
-   * 🔄 Modo de almacenamiento
-   * true = Usa localStorage (modo actual - desarrollo local)
-   * false = Usa API Backend (modo producción)
+   * 🔄 Modo de almacenamiento: false = Usa API Backend
    */
   useLocalStorage: false,
 
   /**
-   * 🔌 URL Base del Backend
-   * Se obtiene de variable de entorno o usa default
+   * 🔌 URLs Base por Microservicio
+   * En desarrollo: Apunta a los puertos locales de Docker (9002, 9003, etc.)
+   * En producción: Apunta al dominio principal donde estará configurado tu API Gateway o Nginx
    */
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8016/api',
+  services: {
+    usuarios:   isDev ? 'http://localhost:9002/api' : `${PROD_DOMAIN}/api`,
+    ventas:     isDev ? 'http://localhost:9003/api' : `${PROD_DOMAIN}/api`,
+    inventario: isDev ? 'http://localhost:9004/api' : `${PROD_DOMAIN}/api`,
+    tienda:     isDev ? 'http://localhost:9005/api' : `${PROD_DOMAIN}/api`,
+  },
 
   /**
    * ⏱️ Timeout de peticiones (ms)
@@ -42,24 +34,24 @@ export const API_CONFIG = {
 
   /**
    * 📍 Endpoints del API
-   * Estructura RESTful estándar
    */
   endpoints: {
-    // Autenticación
+    // Autenticación y Usuarios (Microservicio Usuarios)
     auth: {
-      login: '/auth/login',
-      logout: '/auth/logout',
-      me: '/auth/me',
+      login: '/usuarios/login', 
+      registrar: '/usuarios/registrar',
+      logout: '/usuarios/logout',
+      me: '/usuarios/me',
     },
 
-    // Ventas
+    // Ventas (Microservicio Ventas)
     ventas: {
       comprobantes: '/ventas/comprobantes',
       comprobante: '/ventas/comprobantes/:id',
       generarNumero: '/ventas/comprobantes/generar-numero',
     },
 
-    // Inventario
+    // Inventario (Microservicio Inventario)
     inventario: {
       productos: '/inventario/productos',
       producto: '/inventario/productos/:id',
@@ -73,45 +65,15 @@ export const API_CONFIG = {
       notaSalida: '/inventario/notas-salida/:id',
     },
 
-    // Compras
-    compras: {
-      all: '/compras',
-      byId: '/compras/:id',
-      recibir: '/compras/:id/recibir',
-    },
-
-    // Clientes y Proveedores
-    clientesProveedores: {
-      all: '/clientes-proveedores',
-      byId: '/clientes-proveedores/:id',
-      clientes: '/clientes-proveedores/clientes',
-      proveedores: '/clientes-proveedores/proveedores',
-    },
-
-    // Promociones
-    promociones: {
-      all: '/promociones',
-      byId: '/promociones/:id',
-      activas: '/promociones/activas',
-    },
-
-    // Caja
+    // Caja y Finanzas (Microservicio Finanzas)
     caja: {
       apertura: '/caja/apertura',
       cierre: '/caja/cierre',
       estado: '/caja/estado',
       movimientos: '/caja/movimientos',
-      historial: '/caja/historial',
     },
-
-    // Configuración
-    configuracion: {
-      datosEmpresa: '/configuracion/datos-empresa',
-      usuarios: '/configuracion/usuarios',
-      usuario: '/configuracion/usuarios/:id',
-      locales: '/configuracion/locales',
-      local: '/configuracion/locales/:id',
-    },
+    
+    // (Puedes agregar aquí los demás endpoints que tenías: promociones, configuración, etc.)
   },
 
   /**
@@ -120,30 +82,15 @@ export const API_CONFIG = {
   defaultHeaders: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  },
-
-  /**
-   * 📊 Configuración de respuestas
-   */
-  response: {
-    // Formato esperado de respuestas exitosas
-    successFormat: {
-      data: 'data',
-      message: 'message',
-    },
-    // Formato esperado de respuestas de error
-    errorFormat: {
-      error: 'error',
-      message: 'message',
-    },
-  },
+  }
 };
 
 /**
  * 🛠️ Helper para construir URLs con parámetros
+ * Ahora requiere que le pases el servicio (ej. API_CONFIG.services.usuarios) y el endpoint
  */
-export const buildURL = (endpoint: string, params?: Record<string, string | number>): string => {
-  let url = API_CONFIG.baseURL + endpoint;
+export const buildURL = (serviceBaseUrl: string, endpoint: string, params?: Record<string, string | number>): string => {
+  let url = serviceBaseUrl + endpoint;
   
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -154,9 +101,6 @@ export const buildURL = (endpoint: string, params?: Record<string, string | numb
   return url;
 };
 
-/**
- * 🔄 Helper para verificar si está en modo API
- */
 export const isAPIMode = (): boolean => {
   return !API_CONFIG.useLocalStorage;
 };

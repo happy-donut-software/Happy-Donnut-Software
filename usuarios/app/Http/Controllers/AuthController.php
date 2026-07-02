@@ -77,4 +77,34 @@ class AuthController extends Controller
             return response()->json(['error' => $e->getMessage()], 401);
         }
     }
+    /**
+     * Obtiene los datos del usuario autenticado actualmente.
+     */
+    public function me(Request $request)
+    {
+        // $request->user() obtiene el modelo Usuario basado en el Token enviado
+        $usuario = $request->user();
+
+        return response()->json([
+            'usuario' => [
+                'id' => $usuario->id, // Ojo: verifica si en tu modelo es 'id'
+                'nombre' => $usuario->nombre,
+                'email' => $usuario->correo, // Ajusta a 'correo' o 'email' según tu BD
+                'rol' => $usuario->rol
+            ]
+        ], 200);
+    }
+
+    /**
+     * Cierra la sesión revocando el token actual.
+     */
+    public function logout(Request $request)
+    {
+        // Buscamos el token actual que usó el usuario y lo borramos de la base de datos
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'mensaje' => 'Sesión cerrada exitosamente.'
+        ], 200);
+    }
 }

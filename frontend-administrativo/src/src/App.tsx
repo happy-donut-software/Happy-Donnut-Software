@@ -53,6 +53,9 @@ import {
 // Tipos
 import type { UserRole } from "./types";
 
+// usuarios llamadas de APIusuarios local
+import { API_CONFIG, buildURL } from './config/api.config'; 
+
 /**
  * Componente Principal del Sistema
  */
@@ -85,14 +88,40 @@ export default function App() {
   /**
    * Confirma y ejecuta el logout
    */
-  const confirmLogout = () => {
-    setShowLogin(true);
-    setCurrentView("dashboard");
-    setShowLogoutDialog(false);
-    setCurrentUser("");
-    setUserRole("Empleado");
-  };
+  const confirmLogout = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      
+      // Si hay un token activo, le avisamos a Laravel que lo destruya
+      if (token) {
+        const url = buildURL(API_CONFIG.services.usuarios, API_CONFIG.endpoints.auth.logout);
+        
+        await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error al invalidar token en el servidor:", error);
+    } finally {
+      // ESTO SE EJECUTA SIEMPRE (Pase lo que pase con el servidor, limpiamos el navegador)
+      
+      // 1. Limpiamos el almacenamiento local del navegador
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_profile');
 
+      // 2. Reseteamos los estados de React que ya tenías
+      setShowLogin(true);
+      setCurrentView("dashboard");
+      setShowLogoutDialog(false);
+      setCurrentUser("");
+      setUserRole("Empleado"); // Valor por defecto inicial
+    }
+  };
   /**
    * Renderiza la vista correspondiente según la navegación
    * Incluye control de permisos por rol
