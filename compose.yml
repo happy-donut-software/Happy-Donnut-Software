@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # MVP v1.1 - Happy Donut (Arquitectura de Microservicios con DDD)
 # ==============================================================================
 
@@ -15,8 +15,8 @@ services:
       - "5672:5672"   # Puerto para comunicación entre apps
       - "15672:15672" # Panel de administración web (http://localhost:15672)
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-happydonut}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:?Define RABBITMQ_PASS in .env}
     volumes:
       - vol-rabbitmq:/var/lib/rabbitmq
     networks:
@@ -138,7 +138,7 @@ services:
     environment:
       - APP_KEY=${VENTAS_APP_KEY}
       - APP_ENV=local
-      - APP_DEBUG=true
+      - APP_DEBUG=${APP_DEBUG:-false}
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-ventas
       - DB_PORT=5432
@@ -147,6 +147,7 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
+      - MESSAGING_DRIVER=rabbitmq
       - RABBITMQ_PORT=5672
       - CACHE_STORE=file
       - SESSION_DRIVER=file
@@ -177,7 +178,7 @@ services:
     environment:
       - APP_KEY=${INVENTARIO_APP_KEY}
       - APP_ENV=local
-      - APP_DEBUG=true
+      - APP_DEBUG=${APP_DEBUG:-false}
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-inventario
       - DB_PORT=5432
@@ -186,6 +187,7 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - QUEUE_CONNECTION=rabbitmq
       - RABBITMQ_HOST=rabbitmq
+      - MESSAGING_DRIVER=rabbitmq
       - RABBITMQ_PORT=5672
       - CACHE_STORE=file
       - SESSION_DRIVER=file
@@ -212,7 +214,7 @@ services:
     environment:
       - APP_KEY=${USUARIOS_APP_KEY}
       - APP_ENV=local
-      - APP_DEBUG=true
+      - APP_DEBUG=${APP_DEBUG:-false}
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-usuarios
       - DB_PORT=5432
@@ -242,7 +244,7 @@ services:
     environment:
       - APP_KEY=${FINANZAS_APP_KEY}
       - APP_ENV=local
-      - APP_DEBUG=true
+      - APP_DEBUG=${APP_DEBUG:-false}
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-finanzas
       - DB_PORT=5432
@@ -272,7 +274,7 @@ services:
     environment:
       - APP_KEY=${TIENDA_APP_KEY}
       - APP_ENV=local
-      - APP_DEBUG=true
+      - APP_DEBUG=${APP_DEBUG:-false}
       - DB_CONNECTION=pgsql
       - DB_HOST=bd-tienda-virtual
       - DB_PORT=5432
@@ -336,3 +338,5 @@ volumes:
 networks:
   red-happydonut:
     driver: bridge
+
+

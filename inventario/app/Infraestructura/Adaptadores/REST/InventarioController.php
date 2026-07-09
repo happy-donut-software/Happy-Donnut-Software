@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Infraestructura\Adaptadores\REST;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use App\Aplicacion\CasosUso\ReabastecerStockUseCase;
 use App\Aplicacion\CasosUso\DescontarStockUseCase;
+use App\Aplicacion\CasosUso\ReabastecerStockUseCase;
 use App\Aplicacion\DTOs\AjustarStockDTO;
+use App\Http\Controllers\Controller;
 use DomainException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class InventarioController extends Controller
 {
@@ -24,9 +25,8 @@ class InventarioController extends Controller
 
             return response()->json([
                 'mensaje' => 'Stock reabastecido exitosamente.',
-                'producto_id' => $request->producto_id
+                'producto_id' => $request->producto_id,
             ]);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -45,9 +45,8 @@ class InventarioController extends Controller
 
             return response()->json([
                 'mensaje' => 'Stock descontado exitosamente.',
-                'producto_id' => $request->producto_id
+                'producto_id' => $request->producto_id,
             ]);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

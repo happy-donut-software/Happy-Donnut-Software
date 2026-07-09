@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Infraestructura\Adaptadores\REST;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Aplicacion\CasosUso\CrearOrdenUseCase;
 use App\Aplicacion\CasosUso\PagarOrdenUseCase;
 use App\Aplicacion\DTOs\CrearOrdenDTO;
 use App\Aplicacion\DTOs\ItemOrdenDTO;
+use App\Http\Controllers\Controller;
 use DomainException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OrdenController extends Controller
 {
@@ -41,9 +42,8 @@ class OrdenController extends Controller
                 'mensaje' => 'Orden de venta creada exitosamente',
                 'orden_id' => $orden->obtenerId(),
                 'total' => $orden->calcularTotal(),
-                'estado' => $orden->obtenerEstado()->value
+                'estado' => $orden->obtenerEstado()->value,
             ], 201);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -57,9 +57,8 @@ class OrdenController extends Controller
             return response()->json([
                 'mensaje' => 'Orden pagada exitosamente. ¡A preparar las donas!',
                 'orden_id' => $orden->obtenerId(),
-                'estado' => $orden->obtenerEstado()->value
+                'estado' => $orden->obtenerEstado()->value,
             ]);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Infraestructura\Adaptadores\REST;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Aplicacion\CasosUso\AgregarProductoUseCase;
-use App\Aplicacion\CasosUso\RemoverProductoUseCase;
 use App\Aplicacion\CasosUso\ObtenerCarritoUseCase;
+use App\Aplicacion\CasosUso\RemoverProductoUseCase;
 use App\Aplicacion\DTOs\AgregarProductoDTO;
+use App\Aplicacion\DTOs\RemoverProductoDTO;
+use App\Http\Controllers\Controller;
 use DomainException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class CarritoController extends Controller
 {
@@ -16,14 +18,13 @@ class CarritoController extends Controller
     {
         $carrito = $useCase->ejecutar($clienteId);
 
-        // Preparamos los ítems para mandarlos bonitos en el JSON
-        $itemsFormateados = array_map(function($item) {
+        $itemsFormateados = array_map(function ($item) {
             return [
                 'producto_id' => $item->obtenerProductoId(),
                 'nombre' => $item->obtenerNombreProducto(),
                 'cantidad' => $item->obtenerCantidad(),
                 'precio_unitario' => $item->obtenerPrecioUnitario(),
-                'subtotal' => $item->calcularSubtotal()
+                'subtotal' => $item->calcularSubtotal(),
             ];
         }, $carrito->obtenerItems());
 
@@ -31,7 +32,7 @@ class CarritoController extends Controller
             'carrito_id' => $carrito->obtenerId(),
             'cliente_id' => $carrito->obtenerClienteId(),
             'items' => $itemsFormateados,
-            'total_estimado' => $carrito->calcularTotalEstimado()
+            'total_estimado' => $carrito->calcularTotalEstimado(),
         ]);
     }
 
@@ -58,9 +59,8 @@ class CarritoController extends Controller
 
             return response()->json([
                 'mensaje' => 'Producto agregado al carrito.',
-                'total_estimado' => $carrito->calcularTotalEstimado()
+                'total_estimado' => $carrito->calcularTotalEstimado(),
             ]);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -74,13 +74,13 @@ class CarritoController extends Controller
         ]);
 
         try {
-            $carrito = $useCase->ejecutar($request->cliente_id, $request->producto_id);
+            $dto = new RemoverProductoDTO($request->cliente_id, $request->producto_id);
+            $carrito = $useCase->ejecutar($dto);
 
             return response()->json([
                 'mensaje' => 'Producto removido del carrito.',
-                'total_estimado' => $carrito->calcularTotalEstimado()
+                'total_estimado' => $carrito->calcularTotalEstimado(),
             ]);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }

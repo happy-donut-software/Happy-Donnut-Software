@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CarritoController;
+use App\Infraestructura\Adaptadores\REST\CarritoController;
 
 Route::prefix('tienda/carrito')->group(function () {
     // GET /api/tienda/carrito/{cliente_id} -> Muestra el carrito actual

@@ -161,12 +161,7 @@ export function ProductosSimple({ userRole = "Administrador" }: ProductosProps) 
     setShowNewDialog(true);
   };
 
-  const handleSaveNewProduct = async () => {
-    console.log('handleSaveNewProduct llamado, newProduct:', newProduct);
-    
-    if (!newProduct) {
-        console.log('newProduct es null o undefined, saliendo');
-        return;
+  const handleSaveNewProduct = async () => {    if (!newProduct) {        return;
     }
 
     try {
@@ -178,26 +173,13 @@ export function ProductosSimple({ userRole = "Administrador" }: ProductosProps) 
         precio_base: newProduct.precio,
         tipo_producto: newProduct.tipo_producto === 'Preparado' ? 'donut' : 'cafe',
         activo_web: true,
-      };
-      
-      console.log('Enviando producto:', payload);
-      console.log('newProduct completo:', newProduct);
-      console.log('Categorías disponibles:', categorias);
-
-      // Enviar datos reales al API Gateway
-      console.log('Iniciando fetch a http://localhost:8080/api/v1/products');
-      
-      const response = await fetch('http://localhost:8080/api/v1/products', {
+      };      // Enviar datos reales al API Gateway      const response = await fetch('http://localhost:8080/api/v1/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-      });
-      
-      console.log('Response recibida:', response.status, response.statusText);
-
-      if (response.ok) {
+      });      if (response.ok) {
         toast.success('Producto creado exitosamente en la base de datos');
         setShowNewDialog(false);
         setNewProduct(null);

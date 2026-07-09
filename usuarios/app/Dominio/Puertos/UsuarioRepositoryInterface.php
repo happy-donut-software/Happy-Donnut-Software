@@ -12,5 +12,8 @@ use App\Dominio\Agregados\Usuario;
 interface UsuarioRepositoryInterface
 {
     public function guardar(Usuario $usuario): void;
+
     public function buscarPorEmail(string $email): ?Usuario;
+
+    public function buscarPorId(string $id): ?Usuario;
 }

@@ -571,10 +571,7 @@ const exportData = () => {
     categorias: localStorage.getItem('categorias'),
     comprobantes: localStorage.getItem('comprobantes'),
     // ... etc
-  };
-  
-  console.log(JSON.stringify(data, null, 2));
-};
+  };};
 ```
 
 ### Importar a Base de Datos

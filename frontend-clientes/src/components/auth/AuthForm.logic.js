@@ -47,10 +47,7 @@ export default function AuthFormLogic() {
 const handleLogin = async (e) => {
         e.preventDefault();
         setFormError(null); // Limpiar errores anteriores
-        setIsLoading(true);
-
-        console.log('hola');
-        const { name, email, password, confirmPassword } = loginForm;
+        setIsLoading(true);        const { name, email, password, confirmPassword } = loginForm;
         let result;
 
         if (showLogin) {
@@ -59,15 +56,10 @@ const handleLogin = async (e) => {
         } else {
             // Lógica de REGISTRO
             result = await registerUser(name, email, password, confirmPassword);
-        }
-        console.log('hola');
-        setIsLoading(false);
+        }        setIsLoading(false);
 
         if (result.success) {
-            // Manejo de Éxito
-            console.log(`${showLogin ? 'Login' : 'Registro'} exitoso:`, result.data);
-            
-            // Aquí deberías guardar el token de sesión (si existe) y/o actualizar tu contexto de usuario global
+            // Manejo de Éxito            // Aquí deberías guardar el token de sesión (si existe) y/o actualizar tu contexto de usuario global
             // ... (Lógica de autenticación exitosa) ...
             
             onClose(); // Cerrar el modal

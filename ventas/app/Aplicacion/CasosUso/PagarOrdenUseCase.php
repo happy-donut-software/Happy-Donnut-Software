@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Aplicacion\CasosUso;
 
 use App\Dominio\Agregados\OrdenVenta;
+use App\Dominio\Eventos\OrdenPagada;
+use App\Dominio\Puertos\OrdenPagadaPublicadorInterface;
 use App\Dominio\Puertos\OrdenRepositoryInterface;
+use DateTimeImmutable;
 use DomainException;
 
 /**
@@ -14,7 +17,8 @@ use DomainException;
 class PagarOrdenUseCase
 {
     public function __construct(
-        private readonly OrdenRepositoryInterface $repositorio
+        private readonly OrdenRepositoryInterface $repositorio,
+        private readonly OrdenPagadaPublicadorInterface $publicador
     ) {
     }
 
@@ -34,11 +38,21 @@ class PagarOrdenUseCase
         // 3. Guardamos los cambios
         $this->repositorio->guardar($orden);
 
-        // =========================================================
-        // ¡MAGIA DE MICROSERVICIOS (Próximamente)!
-        // Aquí es donde dispararemos un Evento a RabbitMQ que diga:
-        // "¡OrdenPagada! Inventario, descuenta estas donas de tu stock"
-        // =========================================================
+        $items = array_map(
+            fn ($linea) => [
+                'producto_id' => $linea->obtenerProductoId(),
+                'cantidad' => $linea->obtenerCantidad(),
+            ],
+            $orden->obtenerLineas()
+        );
+
+        $this->publicador->publicar(new OrdenPagada(
+            $orden->obtenerId(),
+            $orden->obtenerClienteId(),
+            $orden->calcularTotal(),
+            $items,
+            (new DateTimeImmutable())->format(DATE_ATOM)
+        ));
 
         return $orden;
     }
