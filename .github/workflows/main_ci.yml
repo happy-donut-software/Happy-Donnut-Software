@@ -40,11 +40,11 @@ jobs:
 
       - name: Instalar Dependencias y PCOV en Servicio de Usuarios
         run: |
-          # Ahora nos conectamos a "servicio-usuarios" como lo dicta el compose.yml
           docker compose exec -T servicio-usuarios composer install --no-interaction --prefer-dist
+          docker compose exec -T servicio-usuarios sh -c "apk add --no-cache autoconf build-base || (apt-get update && apt-get install -y autoconf build-essential)"
+          
           docker compose exec -T servicio-usuarios pecl install pcov
           docker compose exec -T servicio-usuarios docker-php-ext-enable pcov
-
       - name: Ejecutar Pruebas Base (PHPUnit)
         run: |
           echo "=== PROBANDO SERVICIO USUARIOS ==="
