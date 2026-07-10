@@ -22,12 +22,11 @@ jobs:
           echo "RABBITMQ_USER=admin" >> .env
           echo "RABBITMQ_PASS=secret" >> .env
           
-          # Inyectamos claves ficticias base64 para evitar que Laravel colapse
-          echo "VENTAS_APP_KEY=base64:8k1Jg2V8zHhXqWpLmK7yN3cRbT5vF9wE=" >> .env
-          echo "INVENTARIO_APP_KEY=base64:8k1Jg2V8zHhXqWpLmK7yN3cRbT5vF9wE=" >> .env
-          echo "USUARIOS_APP_KEY=base64:8k1Jg2V8zHhXqWpLmK7yN3cRbT5vF9wE=" >> .env
-          echo "FINANZAS_APP_KEY=base64:8k1Jg2V8zHhXqWpLmK7yN3cRbT5vF9wE=" >> .env
-          echo "TIENDA_APP_KEY=base64:8k1Jg2V8zHhXqWpLmK7yN3cRbT5vF9wE=" >> .env
+          echo "VENTAS_APP_KEY=base64:JpwkG8hRj+xPZlO+y3Y1q9sF4aE6bH7cD8eF9gH0aI8=" >> .env
+          echo "INVENTARIO_APP_KEY=base64:JpwkG8hRj+xPZlO+y3Y1q9sF4aE6bH7cD8eF9gH0aI8=" >> .env
+          echo "USUARIOS_APP_KEY=base64:JpwkG8hRj+xPZlO+y3Y1q9sF4aE6bH7cD8eF9gH0aI8=" >> .env
+          echo "FINANZAS_APP_KEY=base64:JpwkG8hRj+xPZlO+y3Y1q9sF4aE6bH7cD8eF9gH0aI8=" >> .env
+          echo "TIENDA_APP_KEY=base64:JpwkG8hRj+xPZlO+y3Y1q9sF4aE6bH7cD8eF9gH0aI8=" >> .env
 
       - name: Levantar Microservicios con Docker Compose
         run: docker compose up -d --build
