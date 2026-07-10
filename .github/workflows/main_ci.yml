@@ -1,0 +1,113 @@
+name: CI Happy Donnut Pipeline Global
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  infrastructure-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Crear archivo .env de prueba
+        run: |
+          touch .env
+          echo "POSTGRES_USER=admin" >> .env
+          echo "POSTGRES_PASSWORD=secret" >> .env
+          echo "DB_NAME_API_GATEWAY=apigateway_db" >> .env
+          echo "DB_NAME_AUTH=auth_db" >> .env
+          echo "DB_NAME_PRODUCT=product_db" >> .env
+          echo "DB_NAME_INVENTORY=inventory_db" >> .env
+          echo "DB_NAME_ORDER=order_db" >> .env
+          echo "DB_NAME_EMAIL=email_db" >> .env
+          echo "RABBITMQ_USER=admin" >> .env
+          echo "RABBITMQ_PASS=secret" >> .env
+
+      - name: Levantar Microservicios con Docker Compose
+        run: docker compose up -d --build
+
+      - name: Esperar que los servicios estén listos (Healthcheck)
+        run: |
+          echo "Esperando estabilidad de los contenedores..."
+          sleep 15
+          docker ps
+
+      - name: Instalar Dependencias y PCOV en Auth Service
+        run: |
+          docker compose exec -T auth-service composer install --no-interaction --prefer-dist
+          # Habilitamos PCOV para medir la cobertura real
+          docker compose exec -T auth-service pecl install pcov
+          docker compose exec -T auth-service docker-php-ext-enable pcov
+
+      - name: Ejecutar Pruebas Base (PHPUnit)
+        run: |
+          echo "=== PROBANDO AUTH SERVICE ==="
+          docker compose exec -T auth-service php -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-text
+
+      - name: Quality Gate Estricto (Infection > 80%)
+        run: |
+          echo "=== VALIDANDO UMBRAL DE CALIDAD (Fase 3) ==="
+          # El pipeline fallará automáticamente si el MSI (Mutation Score) es menor a 80%
+          docker compose exec -T auth-service php -d pcov.enabled=1 ./vendor/bin/infection --min-msi=80 --min-covered-msi=80
+
+      - name: Status Accounting (Generar log SCM - Fase 5)
+        # Solo se ejecuta si los tests pasaron y si es un merge directo a main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+        run: |
+          echo "=== REGISTRANDO ESTADO DE APROBACIÓN ==="
+          echo '{ 
+            "commit": "${{ github.sha }}", 
+            "date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")", 
+            "author": "${{ github.actor }}", 
+            "status": "MERGED_SUCCESSFULLY_WITH_80_COVERAGE" 
+          }' > scm-status-report.json
+          cat scm-status-report.json
+
+      - name: Apagar Infraestructura
+        if: always()
+        run: docker compose down -v
+
+  # ==============================================================================
+  # NUEVA FASE 2: DESPLIEGUE CONTINUO Y GITOPS
+  # ==============================================================================
+  deploy-to-gitops:
+    name: Fase 2 - CD y GitOps
+    needs: infrastructure-and-test # Obliga a esperar que las pruebas pasen con éxito
+    runs-on: ubuntu-latest
+    # Se ejecuta EXCLUSIVAMENTE si el código se integra a la rama main
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Generar Versionamiento Semántico (SemVer 2.0.0)
+        id: version
+        run: |
+          # Genera un tag único inmutable usando el número de ejecución
+          VERSION="v1.2.${{ github.run_number }}"
+          echo "TAG=$VERSION" >> $GITHUB_ENV
+          echo "Versión inmutable generada: $VERSION"
+
+      - name: Descargar Repositorio de Configuración (GitOps)
+        uses: actions/checkout@v4
+        with:
+          repository: 'happy-donut-software/configuracion'
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: 'gitops-repo'
+
+      - name: Actualizar deployment.yaml automáticamente
+        run: |
+          cd gitops-repo
+          
+          # Actualiza el tag buscando en la ruta exacta de tu carpeta
+          sed -i "s|image: .*|image: usuario/mvp:${{ env.TAG }}|g" k8s/desarrollo/deployment.yaml
+          
+          echo "=== Subiendo cambios al repositorio GitOps ==="
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add k8s/desarrollo/deployment.yaml
+          git commit -m "chore(cd): actualización automática a versión inmutable ${{ env.TAG }}"
+          git push origin main
