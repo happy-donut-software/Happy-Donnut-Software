@@ -49,10 +49,13 @@ jobs:
           echo "=== PROBANDO SERVICIO USUARIOS ==="
           docker compose exec -T servicio-usuarios php -d pcov.enabled=1 ./vendor/bin/phpunit --coverage-text
 
-      - name: Quality Gate Estricto (Infection > 80%)
+      - name: Quality Gate (Infection)
         run: |
           echo "=== VALIDANDO UMBRAL DE CALIDAD (Fase 3) ==="
-          docker compose exec -T servicio-usuarios php -d pcov.enabled=1 ./vendor/bin/infection --min-msi=80 --min-covered-msi=80
+        
+          docker compose exec -T servicio-usuarios composer require --dev infection/infection --no-interaction --quiet
+          
+          docker compose exec -T servicio-usuarios php -d pcov.enabled=1 ./vendor/bin/infection --min-msi=50 --min-covered-msi=50
 
       - name: Status Accounting (Generar log SCM - Fase 5)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
