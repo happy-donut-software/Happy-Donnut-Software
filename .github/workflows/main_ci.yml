@@ -52,7 +52,10 @@ jobs:
       - name: Quality Gate (Infection)
         run: |
           echo "=== VALIDANDO UMBRAL DE CALIDAD (Fase 3) ==="
-        
+          
+         
+          docker compose exec -T servicio-usuarios composer config --no-plugins allow-plugins.infection/extension-installer true
+          
           docker compose exec -T servicio-usuarios composer require --dev infection/infection --no-interaction --quiet
           
           docker compose exec -T servicio-usuarios php -d pcov.enabled=1 ./vendor/bin/infection --min-msi=50 --min-covered-msi=50
