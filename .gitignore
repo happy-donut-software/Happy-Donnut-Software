@@ -26,3 +26,4 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+# Comentario inofensivo para probar el pipeline de CI/CD
