@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\InventarioController;
+use App\Infraestructura\Adaptadores\REST\InventarioController;
 
 Route::prefix('inventario/stock')->group(function () {
     // POST /api/inventario/stock/reabastecer -> Sube el stock

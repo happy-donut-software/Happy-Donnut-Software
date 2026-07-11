@@ -30,12 +30,7 @@ async function apiCall(endpoint, body) {
             },
             body: JSON.stringify(body),
         
-        });
-        console.log(body);
-
-        const data = await response.json(); 
-        console.log(response);
-        if (response.ok) {
+        });        const data = await response.json();         if (response.ok) {
             // Éxito (código 2xx)
             return { success: true, data: data };
         } else {

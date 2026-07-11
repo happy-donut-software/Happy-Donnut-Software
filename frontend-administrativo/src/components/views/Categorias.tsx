@@ -201,11 +201,7 @@ export function Categorias() {
     setNewCategoria(null);
   };
 
-  const handleDeleteClick = (id: number) => {
-    console.log('handleDeleteClick llamado con id:', id);
-    console.log('Categorías disponibles:', categorias);
-    
-    const categoria = categorias.find(c => c.categoria_id === id);
+  const handleDeleteClick = (id: number) => {    const categoria = categorias.find(c => c.categoria_id === id);
     if (categoria && categoria.itemsCount > 0) {
       toast.error(`No se puede eliminar una categoría que tiene productos asociados`);
       return;
@@ -214,27 +210,13 @@ export function Categorias() {
     setShowDeleteDialog(true);
   };
 
-  const handleConfirmDelete = async () => {
-    console.log('handleConfirmDelete llamado, deletingCategoriaId:', deletingCategoriaId);
-    
-    if (deletingCategoriaId) {
+  const handleConfirmDelete = async () => {    if (deletingCategoriaId) {
       const categoria = categorias.find(c => c.categoria_id === deletingCategoriaId);
       
       try {
-        const url = `http://localhost:8080/api/v1/categories/${deletingCategoriaId}`;
-        console.log('URL de DELETE:', url);
-        
-        const response = await fetch(url, {
+        const url = `http://localhost:8080/api/v1/categories/${deletingCategoriaId}`;        const response = await fetch(url, {
           method: 'DELETE',
-        });
-
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        
-        const responseData = await response.json();
-        console.log('Response data:', responseData);
-
-        if (response.ok) {
+        });        const responseData = await response.json();        if (response.ok) {
           await loadCategorias();
           setShowDeleteDialog(false);
           setDeletingCategoriaId(null);

@@ -34,11 +34,7 @@ export function Login({ onLogin }: LoginProps) {
 
     try {
       // 1. Construimos la URL dinámica usando nuestro helper
-      const url = buildURL(API_CONFIG.services.usuarios, API_CONFIG.endpoints.auth.login);
-      
-      console.log('Intentando login en:', url);
-      
-      // 2. Hacemos la petición
+      const url = buildURL(API_CONFIG.services.usuarios, API_CONFIG.endpoints.auth.login);      // 2. Hacemos la petición
       const response = await fetch(url, {
         method: 'POST',
         headers: {

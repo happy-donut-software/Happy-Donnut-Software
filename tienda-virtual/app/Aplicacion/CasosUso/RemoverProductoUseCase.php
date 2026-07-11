@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Aplicacion\CasosUso;
 
+use App\Aplicacion\DTOs\RemoverProductoDTO;
 use App\Dominio\Agregados\CarritoCompras;
 use App\Dominio\Puertos\CarritoRepositoryInterface;
 use DomainException;
@@ -18,16 +19,16 @@ class RemoverProductoUseCase
     ) {
     }
 
-    public function ejecutar(string $clienteId, string $productoId): CarritoCompras
+    public function ejecutar(RemoverProductoDTO $dto): CarritoCompras
     {
-        $carrito = $this->repositorio->buscarPorClienteId($clienteId);
+        $carrito = $this->repositorio->buscarPorClienteId($dto->clienteId);
 
         if ($carrito === null) {
             throw new DomainException("No tienes un carrito activo.");
         }
 
         // Delegamos la eliminación al Agregado Raíz
-        $carrito->removerProducto($productoId);
+        $carrito->removerProducto($dto->productoId);
 
         $this->repositorio->guardar($carrito);
 

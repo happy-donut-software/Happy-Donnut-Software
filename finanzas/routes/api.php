@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TurnoCajaController;
+use App\Infraestructura\Adaptadores\REST\TurnoCajaController;
 
 /*
 |--------------------------------------------------------------------------

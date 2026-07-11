@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Dominio\Puertos\UsuarioRepositoryInterface;
 use App\Dominio\Puertos\PasswordHasherInterface;
+use App\Dominio\Puertos\TokenRevocadorInterface;
+use App\Dominio\Puertos\UsuarioRepositoryInterface;
 use App\Infraestructura\Persistencia\Repositorios\EloquentUsuarioRepository;
 use App\Infraestructura\Seguridad\LaravelPasswordHasher;
+use App\Infraestructura\Seguridad\SanctumTokenRevocador;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PasswordHasherInterface::class,
             LaravelPasswordHasher::class
+        );
+
+        $this->app->bind(
+            TokenRevocadorInterface::class,
+            SanctumTokenRevocador::class
         );
     }
 

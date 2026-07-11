@@ -1,0 +1,136 @@
+﻿apiVersion: v1
+kind: Secret
+metadata:
+  name: happydonut-db-secret
+  namespace: happydonut-lab
+type: Opaque
+stringData:
+  POSTGRES_USER: happydonut
+  POSTGRES_PASSWORD: happydonut-lab-password
+  RABBITMQ_DEFAULT_USER: happydonut
+  RABBITMQ_DEFAULT_PASS: happydonut-lab-rabbit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: happydonut-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management-alpine
+          ports:
+            - containerPort: 5672
+              name: amqp
+            - containerPort: 15672
+              name: management
+          envFrom:
+            - secretRef:
+                name: happydonut-db-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: happydonut-lab
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bd-inventario
+  namespace: happydonut-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bd-inventario
+  template:
+    metadata:
+      labels:
+        app: bd-inventario
+        component: persistence-adapter
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: inventario_db
+          envFrom:
+            - secretRef:
+                name: happydonut-db-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bd-inventario
+  namespace: happydonut-lab
+spec:
+  selector:
+    app: bd-inventario
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bd-ventas
+  namespace: happydonut-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bd-ventas
+  template:
+    metadata:
+      labels:
+        app: bd-ventas
+        component: persistence-adapter
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: ventas_db
+          envFrom:
+            - secretRef:
+                name: happydonut-db-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bd-ventas
+  namespace: happydonut-lab
+spec:
+  selector:
+    app: bd-ventas
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432

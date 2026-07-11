@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Infraestructura\Adaptadores\REST\AuthController;
 
 Route::prefix('usuarios')->group(function () {
     //--------------------------------------------------------

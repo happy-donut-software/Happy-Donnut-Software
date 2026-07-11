@@ -33,6 +33,22 @@ class EloquentUsuarioRepository implements UsuarioRepositoryInterface
             return null;
         }
 
+        return $this->mapearAModelo($modelo);
+    }
+
+    public function buscarPorId(string $id): ?Usuario
+    {
+        $modelo = UsuarioModel::find($id);
+
+        if (!$modelo) {
+            return null;
+        }
+
+        return $this->mapearAModelo($modelo);
+    }
+
+    private function mapearAModelo(UsuarioModel $modelo): Usuario
+    {
         return new Usuario(
             $modelo->id,
             $modelo->nombre,

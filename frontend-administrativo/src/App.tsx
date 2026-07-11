@@ -100,13 +100,9 @@ export default function App() {
     verificarSesion();
   }, []);
 
-  const handleLogin = (usuario: string, rol: "Administrador" | "Empleado") => {
-    console.log('handleLogin llamado con:', { usuario, rol });
-    setCurrentUser(usuario);
+  const handleLogin = (usuario: string, rol: "Administrador" | "Empleado") => {    setCurrentUser(usuario);
     setUserRole(rol);
-    setShowLogin(false);
-    console.log('showLogin establecido a false');
-  };
+    setShowLogin(false);  };
 
   const handleLogout = () => {
     setShowLogoutDialog(true);

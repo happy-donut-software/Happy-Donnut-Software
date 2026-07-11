@@ -1,21 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Infraestructura\Adaptadores\REST;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Aplicacion\CasosUso\AbrirTurnoUseCase;
-use App\Aplicacion\CasosUso\RegistrarMovimientoUseCase;
 use App\Aplicacion\CasosUso\CerrarTurnoUseCase;
+use App\Aplicacion\CasosUso\RegistrarMovimientoUseCase;
 use App\Aplicacion\DTOs\AbrirTurnoDTO;
-use App\Aplicacion\DTOs\RegistrarMovimientoDTO;
 use App\Aplicacion\DTOs\CerrarTurnoDTO;
+use App\Aplicacion\DTOs\RegistrarMovimientoDTO;
+use App\Http\Controllers\Controller;
 use DomainException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
-/**
- * Controlador REST para manejar la Caja de la Tienda.
- * Pertenece a la Capa de Infraestructura (Adaptador de Entrada HTTP).
- */
 class TurnoCajaController extends Controller
 {
     public function abrir(Request $request, AbrirTurnoUseCase $useCase): JsonResponse
@@ -26,22 +23,16 @@ class TurnoCajaController extends Controller
         ]);
 
         try {
-            // 1. Armamos el DTO con los datos de la petición (ej. Postman)
             $dto = new AbrirTurnoDTO($request->cajero_id, (float) $request->monto_apertura);
-            
-            // 2. Ejecutamos el Caso de Uso
             $turno = $useCase->ejecutar($dto);
 
-            // 3. Devolvemos respuesta de éxito
             return response()->json([
                 'mensaje' => 'Turno abierto con éxito',
                 'turno_id' => $turno->obtenerId(),
                 'estado' => $turno->obtenerEstado()->value,
-                'monto_apertura' => $request->monto_apertura
+                'monto_apertura' => $request->monto_apertura,
             ], 201);
-
         } catch (DomainException $e) {
-            // Si el dominio lanza una excepción (ej. ya hay caja abierta), devolvemos error 400
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
@@ -51,7 +42,7 @@ class TurnoCajaController extends Controller
         $request->validate([
             'monto' => 'required|numeric|min:0.01',
             'tipo_movimiento' => 'required|string',
-            'descripcion' => 'nullable|string'
+            'descripcion' => 'nullable|string',
         ]);
 
         try {
@@ -64,9 +55,8 @@ class TurnoCajaController extends Controller
             $useCase->ejecutar($dto);
 
             return response()->json([
-                'mensaje' => 'Movimiento registrado correctamente en la caja actual.'
+                'mensaje' => 'Movimiento registrado correctamente en la caja actual.',
             ], 201);
-
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -80,15 +70,13 @@ class TurnoCajaController extends Controller
 
         try {
             $dto = new CerrarTurnoDTO((float) $request->dinero_fisico_real);
-            
             $turnoCerrado = $useCase->ejecutar($dto);
 
             return response()->json([
                 'mensaje' => 'Turno cerrado y arqueo realizado con éxito.',
                 'turno_id' => $turnoCerrado->obtenerId(),
-                'estado' => $turnoCerrado->obtenerEstado()->value
-            ], 200);
-
+                'estado' => $turnoCerrado->obtenerEstado()->value,
+            ]);
         } catch (DomainException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
