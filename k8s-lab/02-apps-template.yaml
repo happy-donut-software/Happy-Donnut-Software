@@ -1,0 +1,140 @@
+﻿# Template only: replace image names with the images you build locally and load into kind.
+# Example:
+# docker build -t happydonut/servicio-ventas:lab ./ventas
+# kind load docker-image happydonut/servicio-ventas:lab --name happydonut-lab
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicio-ventas
+  namespace: happydonut-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: servicio-ventas
+  template:
+    metadata:
+      labels:
+        app: servicio-ventas
+        bounded-context: ventas
+    spec:
+      containers:
+        - name: servicio-ventas
+          image: happydonut/servicio-ventas:lab
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_ENV
+              value: local
+            - name: APP_DEBUG
+              value: "false"
+            - name: DB_CONNECTION
+              value: pgsql
+            - name: DB_HOST
+              value: bd-ventas
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: ventas_db
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: happydonut-db-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: happydonut-db-secret
+                  key: POSTGRES_PASSWORD
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: MESSAGING_DRIVER
+              value: rabbitmq
+            - name: OTEL_SERVICE_NAME
+              value: servicio-ventas
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4318
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicio-ventas
+  namespace: happydonut-lab
+spec:
+  selector:
+    app: servicio-ventas
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicio-inventario
+  namespace: happydonut-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: servicio-inventario
+  template:
+    metadata:
+      labels:
+        app: servicio-inventario
+        bounded-context: inventario
+    spec:
+      containers:
+        - name: servicio-inventario
+          image: happydonut/servicio-inventario:lab
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_ENV
+              value: local
+            - name: APP_DEBUG
+              value: "false"
+            - name: DB_CONNECTION
+              value: pgsql
+            - name: DB_HOST
+              value: bd-inventario
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE
+              value: inventario_db
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: happydonut-db-secret
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: happydonut-db-secret
+                  key: POSTGRES_PASSWORD
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: MESSAGING_DRIVER
+              value: rabbitmq
+            - name: OTEL_SERVICE_NAME
+              value: servicio-inventario
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.observability.svc.cluster.local:4318
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicio-inventario
+  namespace: happydonut-lab
+spec:
+  selector:
+    app: servicio-inventario
+  ports:
+    - port: 8000
+      targetPort: 8000
