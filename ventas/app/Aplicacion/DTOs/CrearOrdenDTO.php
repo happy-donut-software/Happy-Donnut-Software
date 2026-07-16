@@ -4,19 +4,27 @@ declare(strict_types=1);
 
 namespace App\Aplicacion\DTOs;
 
-/**
- * DTO principal para la creación de un pedido.
- * Contiene quién compra y qué cosas está comprando.
- */
-readonly class CrearOrdenDTO
+class CrearOrdenDTO
 {
     /**
-     * @param string $clienteId
      * @param ItemOrdenDTO[] $items
      */
     public function __construct(
-        public string $clienteId,
-        public array $items
+        private readonly ?string $clienteId, 
+        private readonly array $items
     ) {
+    }
+
+    public function obtenerClienteId(): ?string
+    {
+        return $this->clienteId;
+    }
+
+    /**
+     * @return ItemOrdenDTO[]
+     */
+    public function obtenerItems(): array
+    {
+        return $this->items;
     }
 }

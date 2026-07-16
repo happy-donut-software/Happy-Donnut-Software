@@ -15,14 +15,13 @@ class OrdenController extends Controller
     public function crear(Request $request, CrearOrdenUseCase $useCase): JsonResponse
     {
         $request->validate([
-            'cliente_id' => 'required|string',
+            'cliente_id' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.producto_id' => 'required|string',
             'items.*.nombre_producto' => 'required|string',
             'items.*.cantidad' => 'required|integer|min:1',
             'items.*.precio_unitario' => 'required|numeric|min:0',
         ]);
-
         try {
             $itemsDto = [];
             foreach ($request->items as $item) {
@@ -34,7 +33,7 @@ class OrdenController extends Controller
                 );
             }
 
-            $dto = new CrearOrdenDTO($request->cliente_id, $itemsDto);
+            $dto = new CrearOrdenDTO($request->input('cliente_id'), $itemsDto);
             $orden = $useCase->ejecutar($dto);
 
             return response()->json([
@@ -49,15 +48,24 @@ class OrdenController extends Controller
         }
     }
 
-    public function pagar(string $id, PagarOrdenUseCase $useCase): JsonResponse
+    public function pagar(string $id, Request $request, PagarOrdenUseCase $useCase): JsonResponse
     {
+        // 1. Validamos que nos envíen el monto recibido en caja
+        $request->validate([
+            'monto_recibido' => 'required|numeric|min:0'
+        ]);
+
         try {
-            $orden = $useCase->ejecutar($id);
+            // 2. Pasamos el ID y el monto recibido como float
+            $orden = $useCase->ejecutar($id, (float) $request->input('monto_recibido'));
 
             return response()->json([
                 'mensaje' => 'Orden pagada exitosamente. ¡A preparar las donas!',
                 'orden_id' => $orden->obtenerId(),
-                'estado' => $orden->obtenerEstado()->value
+                'estado' => $orden->obtenerEstado()->value,
+                'total' => $orden->calcularTotal(),
+                'monto_recibido' => $orden->obtenerMontoRecibido(),
+                'vuelto' => $orden->obtenerVuelto()
             ]);
 
         } catch (DomainException $e) {

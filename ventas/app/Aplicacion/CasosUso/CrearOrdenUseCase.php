@@ -24,10 +24,10 @@ class CrearOrdenUseCase
     {
         // 1. Creamos la Raíz del Agregado (La Orden principal)
         $ordenId = uniqid('ord_');
-        $orden = new OrdenVenta($ordenId, $dto->clienteId, new DateTimeImmutable());
+        $orden = new OrdenVenta($ordenId, $dto->obtenerClienteId(), new DateTimeImmutable());
 
         // 2. Iteramos sobre los DTOs de los ítems y los convertimos en Entidades de Dominio
-        foreach ($dto->items as $itemDto) {
+        foreach ($dto->obtenerItems() as $itemDto) {
             $lineaId = uniqid('lin_');
             $linea = new LineaOrden(
                 $lineaId,

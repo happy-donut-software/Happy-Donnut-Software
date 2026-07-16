@@ -20,7 +20,7 @@ class OrdenVenta
 
     public function __construct(
         private readonly string $id,
-        private readonly string $clienteId,
+        private readonly ?string $clienteId,
         private readonly DateTimeImmutable $fechaCreacion,
         private EstadoOrden $estado = EstadoOrden::PENDIENTE
     ) {
@@ -31,7 +31,7 @@ class OrdenVenta
         return $this->id;
     }
 
-    public function obtenerClienteId(): string
+    public function obtenerClienteId(): ?string 
     {
         return $this->clienteId;
     }

@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Tabla de la Raíz del Agregado (Orden Principal)
         Schema::create('ordenes_venta', function (Blueprint $table) {
-            // Usamos string() porque generamos IDs con uniqid('ord_') en el Caso de Uso
             $table->string('id')->primary(); 
-            
-            $table->string('cliente_id');
+            $table->string('cliente_id')->nullable(); // ✓ Cambiado a nullable para ventas rápidas de mostrador
+            $table->string('tipo_comprobante')->default('NOTA_PEDIDO'); // BOLETA, NOTA_PEDIDO
             $table->timestamp('fecha_creacion');
-            $table->string('estado'); // pendiente, pagada, cancelada, etc.
-            $table->decimal('total', 10, 2); // Decimal para dinero (ej: 999999.99)
-            
-            $table->timestamps(); // Genera created_at y updated_at
+            $table->string('estado'); // pendiente, pagada, cancelada
+            $table->decimal('total', 10, 2);
+            $table->decimal('monto_recibido', 10, 2)->nullable(); // Para el cálculo del vuelto
+            $table->decimal('vuelto', 10, 2)->nullable(); // Para el cálculo del vuelto
+            $table->timestamps();
         });
 
         // 2. Tabla de las Entidades Hijas (Los ítems comprados en la orden)
