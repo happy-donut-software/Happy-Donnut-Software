@@ -35,3 +35,24 @@ export interface GenerarComprobanteResult {
   numero: string;
   correlativo: string;
 }
+
+export interface ProductoVenta {
+  id: string;
+  nombre: string;
+  precio: number;
+  categoria: string;
+}
+
+export interface CrearOrdenPayload {
+  cliente_id: string | null;
+  codigo_promocion: string | null;
+  items: {
+    producto_id: string;
+    cantidad: number;
+  }[];
+}
+
+export interface PagarOrdenPayload {
+  monto_recibido: number;
+  tipo_comprobante: 'BOLETA' | 'NOTA_PEDIDO';
+}

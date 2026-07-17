@@ -9,6 +9,7 @@ use App\Dominio\Agregados\OrdenVenta;
 use App\Dominio\Entidades\LineaOrden;
 use App\Dominio\Puertos\OrdenRepositoryInterface;
 use DateTimeImmutable;
+use App\Infraestructura\Persistencia\Modelos\ProductoVentaModel;
 
 /**
  * Caso de Uso: Crear un nuevo pedido en el sistema.
@@ -22,28 +23,30 @@ class CrearOrdenUseCase
 
     public function ejecutar(CrearOrdenDTO $dto): OrdenVenta
     {
-        // 1. Creamos la Raíz del Agregado (La Orden principal)
         $ordenId = uniqid('ord_');
         $orden = new OrdenVenta($ordenId, $dto->clienteId, new DateTimeImmutable());
 
-        // 2. Iteramos sobre los DTOs de los ítems y los convertimos en Entidades de Dominio
         foreach ($dto->items as $itemDto) {
+            // 1. Consulta REAL a la base de datos
+            $productoDb = ProductoVentaModel::find($itemDto->productoId);
+
+            if (!$productoDb) {
+                throw new DomainException("El producto con ID {$itemDto->productoId} no existe en el catálogo.");
+            }
+
             $lineaId = uniqid('lin_');
             $linea = new LineaOrden(
                 $lineaId,
                 $itemDto->productoId,
-                $itemDto->nombreProducto,
+                $productoDb->nombre, // Dato real de BD
                 $itemDto->cantidad,
-                $itemDto->precioUnitario
+                (float) $productoDb->precio // Dato real de BD
             );
-            
-            // La Orden se encarga de proteger sus propias reglas al agregar líneas
             $orden->agregarLinea($linea);
         }
 
-        // 3. Persistimos la orden usando el puerto (abstracción de BD)
+        // ... (resto del código de promociones y guardado)
         $this->repositorio->guardar($orden);
-
         return $orden;
     }
 }

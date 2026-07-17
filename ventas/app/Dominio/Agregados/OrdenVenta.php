@@ -17,15 +17,15 @@ class OrdenVenta
 {
     /** @var LineaOrden[] */
     private array $lineas = [];
-
     public function __construct(
         private readonly string $id,
         private readonly string $clienteId,
         private readonly DateTimeImmutable $fechaCreacion,
-        private EstadoOrden $estado = EstadoOrden::PENDIENTE
+        private EstadoOrden $estado = EstadoOrden::PENDIENTE,
+        private string $tipoComprobante = 'NOTA_PEDIDO'
     ) {
     }
-
+    
     public function obtenerId(): string
     {
         return $this->id;
@@ -64,7 +64,7 @@ class OrdenVenta
         foreach ($this->lineas as $linea) {
             $total += $linea->calcularSubtotal();
         }
-        return $total;
+        return max(0, $total - $this->descuento); // Se aplica el descuento
     }
 
     public function marcarComoPagada(): void
@@ -88,5 +88,26 @@ class OrdenVenta
     public function obtenerFechaCreacion(): DateTimeImmutable
     {
         return $this->fechaCreacion;
+    }
+
+    public function aplicarDescuento(string $origenPromocion, float $montoDescuento): void
+    {
+        if ($origenPromocion === 'WEB') {
+            throw new DomainException("Promoción Online Rechazada en POS: Las promociones de la tienda virtual no aplican en mostrador.");
+        }
+
+        $this->descuento = $montoDescuento;
+    }
+    public function establecerTipoComprobante(string $tipo): void
+    {
+        if (!in_array($tipo, ['BOLETA', 'NOTA_PEDIDO'])) {
+            throw new DomainException("Tipo de comprobante inválido.");
+        }
+        $this->tipoComprobante = $tipo;
+    }
+
+    public function obtenerTipoComprobante(): string
+    {
+        return $this->tipoComprobante;
     }
 }

@@ -24,9 +24,12 @@ class EloquentOrdenRepository implements OrdenRepositoryInterface
                 ['id' => $orden->obtenerId()],
                 [
                     'cliente_id' => $orden->obtenerClienteId(),
+                    'tipo_comprobante' => $orden->obtenerTipoComprobante(), // ✓ Nueva línea
                     'fecha_creacion' => $orden->obtenerFechaCreacion()->format('Y-m-d H:i:s'),
                     'estado' => $orden->obtenerEstado()->value,
                     'total' => $orden->calcularTotal(),
+                    'monto_recibido' => $orden->obtenerMontoRecibido(),
+                    'vuelto' => $orden->obtenerVuelto(),
                 ]
             );
 

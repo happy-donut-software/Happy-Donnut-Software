@@ -18,27 +18,22 @@ class PagarOrdenUseCase
     ) {
     }
 
-    public function ejecutar(string $ordenId): OrdenVenta
+    public function ejecutar(string $ordenId, float $montoRecibido, string $tipoComprobante): OrdenVenta
     {
-        // 1. Buscamos la orden
         $orden = $this->repositorio->buscarPorId($ordenId);
 
         if ($orden === null) {
             throw new DomainException("La orden especificada no existe.");
         }
 
-        // 2. Delegamos la lógica de negocio al Agregado
-        // Él verificará si está PENDIENTE antes de cambiar a PAGADA.
-        $orden->marcarComoPagada();
+        // Asignar el comprobante ANTES de pagar
+        $orden->establecerTipoComprobante($tipoComprobante);
+        
+        $orden->marcarComoPagada($montoRecibido);
 
-        // 3. Guardamos los cambios
+        // TODO: Si es BOLETA, emitir evento "VentaAcumuladaEnRUS" para Finanzas
+
         $this->repositorio->guardar($orden);
-
-        // =========================================================
-        // ¡MAGIA DE MICROSERVICIOS (Próximamente)!
-        // Aquí es donde dispararemos un Evento a RabbitMQ que diga:
-        // "¡OrdenPagada! Inventario, descuenta estas donas de tu stock"
-        // =========================================================
 
         return $orden;
     }
