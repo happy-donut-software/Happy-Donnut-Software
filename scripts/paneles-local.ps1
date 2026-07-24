@@ -19,7 +19,7 @@ function Start-LocalForward {
     }
     $mapping = $LocalPort.ToString() + ':' + $RemotePort.ToString()
     $process = Start-Process kubectl -ArgumentList @(
-        '-n', $Namespace, 'port-forward', '--address=127.0.0.1', $Resource, $mapping
+        '-n', $Namespace, 'port-forward', '--address=0.0.0.0', $Resource, $mapping
     ) -PassThru -WindowStyle Hidden
     Start-Sleep -Seconds 2
     if ($process.HasExited -or -not (Test-LocalPort $LocalPort)) {
