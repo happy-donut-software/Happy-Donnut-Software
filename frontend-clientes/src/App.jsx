@@ -65,14 +65,19 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(true);
 
   const addToCart = (product) => {
+    if (!product?.id) {
+      console.error('No se puede agregar al carrito un producto sin ID de catálogo.', product);
+      return;
+    }
+
     setCartItems(prev => {
-      const existing = prev.find(item => item.name === product.name);
+      const existing = prev.find(item => item.id === product.id);
       if (existing) {
         return prev.map(item =>
-          item.name === product.name ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1, id: Date.now() }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
@@ -83,6 +88,7 @@ export default function App() {
   };
 
   const getTotalPrice = () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const clearCart = () => setCartItems([]);
 
 
  const handleLogin = async (e) => {
@@ -132,15 +138,16 @@ export default function App() {
   };
 
   const renderPage = () => {
-    const props = { addToCart };
+    const mostrarProductos = () => handleNavigation('productos');
+
     switch (activeSection) {
-      case 'inicio': return <Home {...props} />;
-      case 'productos': return <Products {...props} />;
-      case 'promociones': return <Promotions {...props} />;
+      case 'inicio': return <Home addToCart={addToCart} onViewProducts={mostrarProductos} />;
+      case 'productos': return <Products addToCart={addToCart} />;
+      case 'promociones': return <Promotions onViewProducts={mostrarProductos} />;
       case 'nosotros': return <About />;
       case 'contacto': return <Contact />;
       case 'comentarios': return <Comments />;
-      default: return <Home {...props} />;
+      default: return <Home addToCart={addToCart} onViewProducts={mostrarProductos} />;
     }
   };
 
@@ -165,6 +172,7 @@ export default function App() {
         updateQuantity={updateQuantity}
         removeFromCart={removeFromCart}
         getTotalPrice={getTotalPrice}
+        clearCart={clearCart}
       />
 
       <LoginModal

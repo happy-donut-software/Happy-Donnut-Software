@@ -53,6 +53,15 @@ if (-not $OmitirBuild -and $currentContext.StartsWith('kind-')) {
     Invoke-Checked kind (@('load','docker-image','--name',$kindCluster) + $localImages)
 }
 Invoke-Checked kubectl @('apply','-k','gitops/k8s/overlays/local')
+if (-not $OmitirBuild) {
+    $appDeployments = @(
+        'servicio-ventas','servicio-inventario','servicio-usuarios','servicio-finanzas',
+        'servicio-tienda-virtual','frontend-clientes','frontend-administrativo','ventas-outbox-worker'
+    )
+    foreach ($deployment in $appDeployments) {
+        Invoke-Checked kubectl @('rollout','restart',"deployment/$deployment",'-n','happy-donut')
+    }
+}
 foreach ($database in @('ventas','inventario','usuarios','finanzas','tienda-virtual')) { Invoke-Checked kubectl @('rollout','status',"statefulset/bd-$database",'-n','happy-donut','--timeout=10m') }
 Invoke-Checked kubectl @('rollout','status','deployment/rabbitmq','-n','happy-donut','--timeout=10m')
 Invoke-Checked kubectl @('rollout','status','deployment/redis','-n','happy-donut','--timeout=10m')

@@ -2,13 +2,13 @@
 import React from 'react';
 import { promotions } from '../data/promotions';
 
-export default function Promotions({ addToCart }) {
+export default function Promotions({ onViewProducts }) {
   return (
     <section className="py-12 bg-orange-50">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center text-orange-500 mb-12">Promociones Especiales!</h2>
+        <h2 className="text-3xl font-bold text-center text-orange-500 mb-12">¡Promociones Especiales!</h2>
         <p className="text-center text-lg text-gray-700 mb-12">
-          Aprovecha nuestras increíbles ofertas y ahorra en tus productos favoritos
+          Revisa las ofertas y compra únicamente productos disponibles del catálogo.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {promotions.map(promo => (
@@ -26,11 +26,11 @@ export default function Promotions({ addToCart }) {
                     <span className="ml-2 text-green-600 font-medium">¡Ahorra S/. {promo.savings.toFixed(2)}!</span>
                   )}
                 </div>
-                <button 
-                  onClick={() => addToCart({ name: promo.title, price: promo.discountedPrice })}
+                <button
+                  onClick={onViewProducts}
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md font-medium transition-colors"
                 >
-                  Agregar al Carrito
+                  Ver productos disponibles
                 </button>
               </div>
             </div>
@@ -38,7 +38,7 @@ export default function Promotions({ addToCart }) {
         </div>
         <div className="mt-12 p-6 bg-white rounded-lg shadow-md text-center">
           <p className="text-gray-600 italic">
-            * Nota: Las promociones están sujetas a disponibilidad.
+            * Las promociones se confirman según la disponibilidad del catálogo.
           </p>
         </div>
       </div>

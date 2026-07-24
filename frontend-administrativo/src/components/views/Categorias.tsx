@@ -52,43 +52,25 @@ export function Categorias() {
 
   const loadCategorias = async () => {
     try {
-      // Cargar categorías desde la API
-      const categoriasResponse = await fetch('http://localhost:8080/api/v1/categories', {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const response = await fetch('/api/ventas/categorias', {
+        headers: { Accept: 'application/json' }
       });
-      
-      if (categoriasResponse.ok) {
-        const categoriasData = await categoriasResponse.json();
-        
-        // Cargar productos para contar cuántos hay por categoría
-        const productosResponse = await fetch('http://localhost:8080/api/v1/products', {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (productosResponse.ok) {
-          const productosData = await productosResponse.json();
-          const productos = productosData.data || [];
-          
-          // Calcular itemsCount dinámicamente
-          const categoriasConCount = categoriasData.map(cat => ({
-            ...cat,
-            itemsCount: productos.filter(p => p.categoria_id === cat.categoria_id).length
-          }));
-          
-          setCategorias(categoriasConCount);
-        } else {
-          setCategorias(categoriasData);
-        }
-      } else {
-        toast.error('Error cargando categorías');
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || `Error ${response.status}`);
       }
+
+      const categoriasApi = Array.isArray(data.categorias) ? data.categorias : [];
+      setCategorias(categoriasApi.map((categoria: any) => ({
+        categoria_id: categoria.id,
+        nombre_categoria: categoria.nombre,
+        descripcion: categoria.descripcion || '',
+        itemsCount: Number(categoria.productos_count || 0)
+      })));
     } catch (error) {
       console.error('Error cargando categorías:', error);
-      toast.error('Error de conexión cargando categorías');
+      toast.error(error instanceof Error ? error.message : 'No se pudieron cargar las categorías');
     }
   };
 
@@ -110,13 +92,13 @@ export function Categorias() {
       }
       
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/categories/${editingCategoria.categoria_id}`, {
+        const response = await fetch(`/api/ventas/categorias/${editingCategoria.categoria_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            nombre_categoria: editingCategoria.nombre_categoria,
+            nombre: editingCategoria.nombre_categoria,
             descripcion: editingCategoria.descripcion || ''
           }),
         });
@@ -165,13 +147,13 @@ export function Categorias() {
       }
       
       try {
-        const response = await fetch('http://localhost:8080/api/v1/categories', {
+        const response = await fetch('/api/ventas/categorias', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            nombre_categoria: newCategoria.nombre_categoria,
+            nombre: newCategoria.nombre_categoria,
             descripcion: newCategoria.descripcion || ''
           }),
         });
@@ -221,7 +203,7 @@ export function Categorias() {
       const categoria = categorias.find(c => c.categoria_id === deletingCategoriaId);
       
       try {
-        const url = `http://localhost:8080/api/v1/categories/${deletingCategoriaId}`;
+        const url = `/api/ventas/categorias/${deletingCategoriaId}`;
         console.log('URL de DELETE:', url);
         
         const response = await fetch(url, {
@@ -231,7 +213,7 @@ export function Categorias() {
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
         
-        const responseData = await response.json();
+        const responseData = await response.json().catch(() => ({}));
         console.log('Response data:', responseData);
 
         if (response.ok) {

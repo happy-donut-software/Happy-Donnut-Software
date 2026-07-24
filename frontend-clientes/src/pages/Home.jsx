@@ -1,63 +1,30 @@
 // src/pages/Home.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import Carousel from '../components/carousel/Carousel';
-import CategoryFilter from '../components/product/CategoryFilter';
-import ProductCard from '../components/product/ProductCard';
-import { products } from '../data/products';
+import Products from './Products';
 import { promotions } from '../data/promotions';
 
-export default function Home({ addToCart }) {
-  const [selectedCategory, setSelectedCategory] = useState('todos');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'todos' || product.category === selectedCategory;
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
+export default function Home({ addToCart, onViewProducts }) {
   return (
     <>
       <Carousel />
-      
+
       <section className="py-12 bg-orange-50">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-orange-500 mb-6">Bienvenidos a Happy Donut</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Desde 2020, hemos estado endulzando vidas con las mejores donas artesanales. Cada una de nuestras donas está hecha con amor, ingredientes frescos y las mejores recetas tradicionales.
+            Desde 2020, endulzamos vidas con donas artesanales elaboradas con ingredientes frescos y mucho cariño.
           </p>
         </div>
       </section>
 
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-orange-500 mb-12">Nuestros Productos</h2>
-          <CategoryFilter selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
-          <div className="mb-8 flex justify-center">
-            <div className="relative w-full max-w-md">
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map(product => (
-              <ProductCard key={product.id} product={product} addToCart={addToCart} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <Products addToCart={addToCart} />
 
       <section className="py-12 bg-orange-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-orange-500 mb-12">Promociones Especiales!</h2>
+          <h2 className="text-3xl font-bold text-center text-orange-500 mb-12">¡Promociones Especiales!</h2>
           <p className="text-center text-lg text-gray-700 mb-12">
-            Aprovecha nuestras increíbles ofertas y ahorra en tus productos favoritos
+            Conoce nuestras ofertas y elige los productos disponibles del catálogo.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {promotions.map(promo => (
@@ -75,11 +42,11 @@ export default function Home({ addToCart }) {
                       <span className="ml-2 text-green-600 font-medium">¡Ahorra S/. {promo.savings.toFixed(2)}!</span>
                     )}
                   </div>
-                  <button 
-                    onClick={() => addToCart({ name: promo.title, price: promo.discountedPrice, image: promo.image })}
+                  <button
+                    onClick={onViewProducts}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-md font-medium transition-colors"
                   >
-                    Agregar al Carrito
+                    Ver productos disponibles
                   </button>
                 </div>
               </div>
@@ -87,7 +54,7 @@ export default function Home({ addToCart }) {
           </div>
           <div className="mt-12 p-6 bg-white rounded-lg shadow-md text-center">
             <p className="text-gray-600 italic">
-              * Nota: Las promociones están sujetas a disponibilidad y pueden variar según la ubicación.
+              * Las promociones se confirman según la disponibilidad del catálogo.
             </p>
           </div>
         </div>

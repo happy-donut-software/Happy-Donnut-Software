@@ -10,8 +10,9 @@ export default function CartModal({
   onClose, 
   cartItems, 
   updateQuantity, 
-  removeFromCart, 
-  getTotalPrice 
+  removeFromCart,
+  getTotalPrice,
+  clearCart
 }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('yape');
@@ -38,7 +39,7 @@ export default function CartModal({
       const result = await createOrder(orderItems, paymentMethod);
 
       if (result.success) {
-        // Limpiar carrito y cerrar modal
+        clearCart();
         onClose();
         // Aquí podrías mostrar un mensaje de éxito o redirigir a página de confirmación
         alert('¡Orden creada exitosamente! ID: ' + result.data.order.venta_id);
