@@ -1,0 +1,7 @@
+{
+  "name": "happy-donut-e2e",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {"test": "cucumber-js ../features/e2e_local.feature --require steps.cjs --format progress"},
+  "devDependencies": {"@cucumber/cucumber": "13.1.0"}
+}

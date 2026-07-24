@@ -1,0 +1,29 @@
+grafana:
+  service:
+    type: NodePort
+    nodePort: 30300
+  adminPassword: happy-donut-local
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+  additionalDataSources:
+    - name: Tempo
+      type: tempo
+      access: proxy
+      url: http://tempo.observability.svc.cluster.local:3100
+      isDefault: false
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 7d
+    resources:
+      requests: {cpu: 200m, memory: 512Mi}
+      limits: {cpu: 1, memory: 2Gi}
+alertmanager:
+  enabled: true
+
+# Docker Desktop: node-exporter no es necesario para las métricas de Happy Donut.
+nodeExporter:
+  enabled: false

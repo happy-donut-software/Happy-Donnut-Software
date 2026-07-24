@@ -28,8 +28,10 @@ export default function CartModal({
 
       // Preparar items para el backend
       const orderItems = cartItems.map(item => ({
-        product_id: item.id,
-        quantity: item.quantity
+        producto_id: String(item.id),
+        nombre_producto: item.name,
+        cantidad: item.quantity,
+        precio_unitario: Number(item.price)
       }));
 
       // Crear orden

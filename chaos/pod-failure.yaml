@@ -1,0 +1,10 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: {name: ventas-pod-failure, namespace: happy-donut}
+spec:
+  action: pod-failure
+  mode: one
+  duration: 60s
+  selector:
+    namespaces: [happy-donut]
+    labelSelectors: {app.kubernetes.io/name: servicio-ventas}

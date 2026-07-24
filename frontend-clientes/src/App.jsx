@@ -107,6 +107,7 @@ export default function App() {
         console.log(result);
 
         if (result.success) {
+            if (result.data?.access_token) localStorage.setItem('authToken', result.data.access_token);
             // Manejo de Éxito
             console.log(`${showLogin ? 'Login' : 'Registro'} exitoso:`, result.data);
             

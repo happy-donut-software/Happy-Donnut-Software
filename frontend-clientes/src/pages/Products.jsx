@@ -19,15 +19,14 @@ export default function Products({ addToCart }) {
       
       if (result.success) {
         // Transformar datos del backend al formato del frontend
-        const transformedProducts = result.data.map(product => ({
-          id: product.producto_id,
-          name: product.nombre_producto,
-          price: product.precio_base,
-          category: product.tipo_producto === 'donut' ? 'donas' : 
-                   product.tipo_producto === 'cafe' ? 'cafe' : 'otros',
+        const transformedProducts = (result.data.productos || []).map(product => ({
+          id: product.id,
+          name: product.nombre,
+          price: Number(product.precio),
+          category: 'donas',
           rating: 4.5, // valor por defecto
-          description: product.descripcion || 'Delicioso producto de Happy Donuts',
-          image: `https://placehold.co/300x200/ff9a8b/ffffff?text=${encodeURIComponent(product.nombre_producto)}`
+          description: 'Producto fresco de Happy Donut',
+          image: `https://placehold.co/300x200/ff9a8b/ffffff?text=${encodeURIComponent(product.nombre)}`
         }));
         
         setProducts(transformedProducts);
@@ -49,15 +48,14 @@ export default function Products({ addToCart }) {
       const result = await searchProducts(searchTerm);
       
       if (result.success) {
-        const transformedProducts = result.data.map(product => ({
-          id: product.producto_id,
-          name: product.nombre_producto,
-          price: product.precio_base,
-          category: product.tipo_producto === 'donut' ? 'donas' : 
-                   product.tipo_producto === 'cafe' ? 'cafe' : 'otros',
+        const transformedProducts = (result.data.productos || []).map(product => ({
+          id: product.id,
+          name: product.nombre,
+          price: Number(product.precio),
+          category: 'donas',
           rating: 4.5,
-          description: product.descripcion || 'Delicioso producto de Happy Donuts',
-          image: `https://placehold.co/300x200/ff9a8b/ffffff?text=${encodeURIComponent(product.nombre_producto)}`
+          description: 'Producto fresco de Happy Donut',
+          image: `https://placehold.co/300x200/ff9a8b/ffffff?text=${encodeURIComponent(product.nombre)}`
         }));
         
         setProducts(transformedProducts);

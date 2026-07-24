@@ -8,42 +8,36 @@ use App\Aplicacion\DTOs\CrearOrdenDTO;
 use App\Dominio\Agregados\OrdenVenta;
 use App\Dominio\Entidades\LineaOrden;
 use App\Dominio\Puertos\OrdenRepositoryInterface;
+use App\Dominio\Puertos\ProductoVentaRepositoryInterface;
 use DateTimeImmutable;
+use DomainException;
 
-/**
- * Caso de Uso: Crear un nuevo pedido en el sistema.
- */
 class CrearOrdenUseCase
 {
     public function __construct(
-        private readonly OrdenRepositoryInterface $repositorio
-    ) {
-    }
+        private readonly OrdenRepositoryInterface $ordenes,
+        private readonly ProductoVentaRepositoryInterface $productos
+    ) {}
 
     public function ejecutar(CrearOrdenDTO $dto): OrdenVenta
     {
-        // 1. Creamos la Raíz del Agregado (La Orden principal)
-        $ordenId = uniqid('ord_');
-        $orden = new OrdenVenta($ordenId, $dto->obtenerClienteId(), new DateTimeImmutable());
+        $orden = new OrdenVenta('ord_' . bin2hex(random_bytes(12)), $dto->obtenerClienteId(), new DateTimeImmutable());
 
-        // 2. Iteramos sobre los DTOs de los ítems y los convertimos en Entidades de Dominio
         foreach ($dto->obtenerItems() as $itemDto) {
-            $lineaId = uniqid('lin_');
-            $linea = new LineaOrden(
-                $lineaId,
-                $itemDto->productoId,
-                $itemDto->nombreProducto,
+            $producto = $this->productos->buscarActivoPorId($itemDto->productoId);
+            if ($producto === null) {
+                throw new DomainException('El producto no existe o no esta disponible: ' . $itemDto->productoId);
+            }
+            $orden->agregarLinea(new LineaOrden(
+                'lin_' . bin2hex(random_bytes(12)),
+                $producto->id,
+                $producto->nombre,
                 $itemDto->cantidad,
-                $itemDto->precioUnitario
-            );
-            
-            // La Orden se encarga de proteger sus propias reglas al agregar líneas
-            $orden->agregarLinea($linea);
+                $producto->precio
+            ));
         }
 
-        // 3. Persistimos la orden usando el puerto (abstracción de BD)
-        $this->repositorio->guardar($orden);
-
+        $this->ordenes->guardar($orden);
         return $orden;
     }
 }

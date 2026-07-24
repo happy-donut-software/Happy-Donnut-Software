@@ -1,678 +1,148 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Plus, Trash2, Save, Check, ChevronsUpDown, AlertCircle } from "lucide-react";
-import { toast } from "sonner@2.0.3";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Alert, AlertDescription } from "../ui/alert";
-import { 
-  getProductos, 
-  getClientes, 
-  addComprobante, 
-  addNotaSalida,
-  generateComprobanteNumero,
-  generateNotaSalidaNumero,
-  getNextId,
-  getComprobantes,
-  getNotasSalida,
-  updateProducto,
-  isCajaAbierta,
-  addMovimientoCaja,
-  getMovimientosCaja,
-  getPromocionesActivas,
-  type Producto,
-  type ClienteProveedor,
-  type Comprobante,
-  type NotaSalida,
-  type ProductoNS,
-  type MovimientoCaja,
-  type Promocion
-} from "../../lib/storage";
+import { Loader2, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { API_CONFIG, buildURL } from "../../src/config/api.config";
 
-interface ItemComprobante {
-  id: number;
-  productoId: number;
-  producto: string;
-  cantidad: number;
-  precio: number;
-  esPromocion?: boolean;
-  promocionNombre?: string;
-}
+type Producto = { id: string; nombre: string; precio: number };
+type Cliente = { id: string; nombre: string; telefono: string; direccion?: string | null };
+type ItemCarrito = Producto & { cantidad: number };
+type MetodoPago = "EFECTIVO" | "YAPE" | "PLIN";
+type TipoComprobante = "BOLETA" | "NOTA_PEDIDO";
 
 export function NuevoComprobante() {
-  // Cargar productos, clientes y promociones desde localStorage
-  const productosDisponibles = getProductos();
-  const clientesRegistrados = getClientes();
-  const promocionesActivas = getPromocionesActivas();
-  
-  // Verificar si la caja está abierta
-  const [cajaAbierta, setCajaAbierta] = useState(false);
-  
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [productoId, setProductoId] = useState("");
+  const [carrito, setCarrito] = useState<ItemCarrito[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [procesando, setProcesando] = useState(false);
+  const [error, setError] = useState("");
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [cobroAbierto, setCobroAbierto] = useState(false);
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("EFECTIVO");
+  const [tipoComprobante, setTipoComprobante] = useState<TipoComprobante>("BOLETA");
+  const [montoRecibido, setMontoRecibido] = useState("");
+
+  const total = useMemo(() => carrito.reduce((suma, item) => suma + item.precio * item.cantidad, 0), [carrito]);
+  const monto = metodoPago === "EFECTIVO" ? Number(montoRecibido || 0) : total;
+  const vuelto = monto - total;
+
   useEffect(() => {
-    setCajaAbierta(isCajaAbierta());
-  }, []);
-  
-  // Obtener fecha de hoy en formato YYYY-MM-DD
-  const getFechaHoy = () => {
-    const hoy = new Date();
-    return hoy.toISOString().split('T')[0];
-  };
-
-  const [items, setItems] = useState<ItemComprobante[]>([]);
-  const [nextId, setNextId] = useState(1);
-  const [fecha, setFecha] = useState(getFechaHoy());
-  const [tipoComprobante, setTipoComprobante] = useState("boleta");
-  const [metodoPago, setMetodoPago] = useState("efectivo");
-  
-  // Cliente con búsqueda
-  const [clienteInput, setClienteInput] = useState("");
-  const [openClientes, setOpenClientes] = useState(false);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<string>("");
-
-  // Para cada item necesitamos controlar el popover de productos
-  const [openProductos, setOpenProductos] = useState<{ [key: number]: boolean }>({});
-  
-  // Control del popover de promociones
-  const [openPromociones, setOpenPromociones] = useState(false);
-
-  const addItem = () => {
-    setItems([...items, { id: nextId, productoId: 0, producto: "", cantidad: 1, precio: 0 }]);
-    setNextId(nextId + 1);
-  };
-
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
-    toast.success("Producto eliminado");
-  };
-
-  const updateItem = (id: number, field: string, value: any) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    ));
-  };
-
-  const selectProducto = (itemId: number, producto: Producto) => {
-    setItems(items.map(item => 
-      item.id === itemId ? { 
-        ...item, 
-        productoId: producto.id,
-        producto: producto.nombre, 
-        precio: producto.precio 
-      } : item
-    ));
-    setOpenProductos({ ...openProductos, [itemId]: false });
-    toast.success(`Producto "${producto.nombre}" seleccionado`);
-  };
-
-  const selectPromocion = (promocion: Promocion) => {
-    // Verificar stock de todos los productos de la promoción
-    let stockSuficiente = true;
-    let productoSinStock = "";
-
-    for (const prodPromo of promocion.productos) {
-      const producto = productosDisponibles.find(p => p.id === prodPromo.id);
-      if (!producto || producto.stock < prodPromo.cantidad) {
-        stockSuficiente = false;
-        productoSinStock = prodPromo.nombre;
-        break;
+    const cargar = async () => {
+      try {
+        const respuesta = await fetch(buildURL(API_CONFIG.services.ventas, API_CONFIG.endpoints.ventas.productos));
+        if (!respuesta.ok) throw new Error("No se pudo cargar el catalogo de venta.");
+        const datos = await respuesta.json();
+        setProductos(datos.productos ?? []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error al cargar productos.");
+      } finally {
+        setCargando(false);
       }
-    }
+    };
+    cargar();
+  }, []);
 
-    if (!stockSuficiente) {
-      toast.error(`Stock insuficiente para "${productoSinStock}" en la promoción`);
-      return;
-    }
-
-    // Calcular el precio proporcional para cada producto
-    const totalProductos = promocion.productos.reduce((sum, p) => sum + p.cantidad, 0);
-    const precioPorProducto = promocion.precioPromocion / totalProductos;
-
-    // Agregar cada producto de la promoción como item individual
-    const nuevosItems = promocion.productos.map(prodPromo => ({
-      id: nextId + promocion.productos.indexOf(prodPromo),
-      productoId: prodPromo.id,
-      producto: prodPromo.nombre,
-      cantidad: prodPromo.cantidad,
-      precio: precioPorProducto,
-      esPromocion: true,
-      promocionNombre: promocion.nombre
-    }));
-
-    setItems([...items, ...nuevosItems]);
-    setNextId(nextId + promocion.productos.length);
-    setOpenPromociones(false);
-    toast.success(`Promoción "${promocion.nombre}" agregada`);
-  };
-
-  const handleClienteSelect = (nombre: string) => {
-    setClienteSeleccionado(nombre);
-    setClienteInput(nombre);
-    setOpenClientes(false);
-  };
-
-  const handleClienteInputChange = (value: string) => {
-    setClienteInput(value);
-    setClienteSeleccionado(value);
-  };
-
-  const total = items.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
-
-  const handleSubmit = () => {
-    // Validar que la caja esté abierta
-    if (!cajaAbierta) {
-      toast.error("Debe aperturar la caja antes de realizar una venta");
-      toast.info("Vaya a 'Caja > Apertura de Caja' para abrir la caja");
-      return;
-    }
-
-    // Validaciones - Cliente ya NO es obligatorio
-    if (items.length === 0) {
-      toast.error("Debe agregar al menos un producto");
-      return;
-    }
-
-    const productosIncompletos = items.filter(item => !item.producto || item.cantidad <= 0 || item.precio <= 0);
-    if (productosIncompletos.length > 0) {
-      toast.error("Complete todos los datos de los productos");
-      return;
-    }
-
+  const buscarClientes = async () => {
     try {
-      // Generar número de comprobante
-      const { serie, numero, correlativo } = generateComprobanteNumero(tipoComprobante as "boleta" | "factura");
-      const currentUser = localStorage.getItem('currentUser') || 'Sistema';
-      const now = new Date();
-      const hora = now.toTimeString().split(' ')[0].substring(0, 5);
-      
-      // Crear comprobante
-      const nuevoComprobante: Comprobante = {
-        id: getNextId(getComprobantes()),
-        numero,
-        serie,
-        tipoComprobante: tipoComprobante as "boleta" | "factura",
-        fecha,
-        hora,
-        cliente: clienteInput.trim() || undefined, // Opcional
-        metodoPago: metodoPago as "efectivo" | "tarjeta" | "yape" | "plin",
-        items: items.map(item => ({
-          id: item.id,
-          productoId: item.productoId,
-          producto: item.producto,
-          cantidad: item.cantidad,
-          precio: item.precio
-        })),
-        subtotal: total,
-        total: total,
-        usuario: currentUser,
-        estado: "Emitido"
-      };
-      
-      // Guardar comprobante
-      addComprobante(nuevoComprobante);
-      
-      // Disparar evento para actualizar la lista de comprobantes
-      window.dispatchEvent(new Event('comprobantes-updated'));
-      
-      // Registrar movimiento de ingreso en caja
-      const movimientoIngreso: MovimientoCaja = {
-        id: getNextId(getMovimientosCaja()),
-        fecha: fecha,
-        hora: hora,
-        tipo: "Ingreso",
-        concepto: `Venta - ${correlativo}`,
-        metodoPago: metodoPago as "efectivo" | "tarjeta" | "yape" | "plin",
-        monto: total,
-        referencia: clienteInput.trim() ? `Cliente: ${clienteInput}` : undefined,
-        usuario: currentUser
-      };
-      
-      addMovimientoCaja(movimientoIngreso);
-      
-      // Descontar stock de los productos vendidos
-      items.forEach(item => {
-        if (item.productoId > 0) {
-          updateProducto(item.productoId, -item.cantidad);
-        }
-      });
-      
-      // Crear nota de salida automáticamente por venta
-      const productosNS: ProductoNS[] = items.map(item => ({
-        id: item.productoId,
-        nombre: item.producto,
-        cantidad: item.cantidad,
-        unidad: "Unidad" // Por defecto, puede ajustarse según el producto
-      }));
-      
-      const nuevaNotaSalida: NotaSalida = {
-        id: getNextId(getNotasSalida()),
-        numero: generateNotaSalidaNumero(),
-        fecha,
-        hora,
-        motivo: "Por Venta",
-        docReferencia: correlativo,
-        productos: productosNS,
-        observaciones: clienteInput.trim() 
-          ? `Venta registrada en ${correlativo} - Cliente: ${clienteInput}` 
-          : `Venta registrada en ${correlativo}`,
-        usuario: currentUser
-      };
-      
-      // Guardar nota de salida
-      addNotaSalida(nuevaNotaSalida);
-      
-      // Disparar evento para actualizar la lista de notas de salida
-      window.dispatchEvent(new Event('notas-salida-updated'));
-
-      toast.success(`Comprobante ${correlativo} creado exitosamente`);
-      toast.success(`Nota de salida ${nuevaNotaSalida.numero} generada automáticamente`);
-      toast.success(`Stock actualizado para ${items.length} producto(s)`);
-      toast.success(`Ingreso registrado en movimientos de caja: S/ ${total.toFixed(2)}`);
-      
-      // Limpiar formulario
-      handleLimpiar();
-    } catch (error) {
-      toast.error("Error al guardar el comprobante");
-      console.error(error);
+      const endpoint = `${API_CONFIG.endpoints.clientes.frecuentes}?buscar=${encodeURIComponent(busquedaCliente)}`;
+      const respuesta = await fetch(buildURL(API_CONFIG.services.usuarios, endpoint));
+      if (!respuesta.ok) throw new Error("No se pudo buscar clientes.");
+      const datos = await respuesta.json();
+      setClientes(datos.clientes ?? []);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error buscando clientes.");
     }
   };
 
-  const handleLimpiar = () => {
-    setItems([]);
-    setNextId(1);
-    setFecha(getFechaHoy());
-    setClienteInput("");
-    setClienteSeleccionado("");
-    setMetodoPago("efectivo");
-    toast.info("Formulario limpiado");
+  const agregarProducto = () => {
+    const producto = productos.find((actual) => actual.id === productoId);
+    if (!producto) return;
+    setCarrito((actual) => {
+      const existe = actual.find((item) => item.id === producto.id);
+      return existe
+        ? actual.map((item) => item.id === producto.id ? { ...item, cantidad: item.cantidad + 1 } : item)
+        : [...actual, { ...producto, cantidad: 1 }];
+    });
+  };
+
+  const actualizarCantidad = (id: string, cantidad: number) => {
+    setCarrito((actual) => actual.map((item) => item.id === id ? { ...item, cantidad: Math.max(1, cantidad) } : item));
+  };
+
+  const cobrar = async () => {
+    if (carrito.length === 0 || (metodoPago === "EFECTIVO" && vuelto < 0)) return;
+    setProcesando(true);
+    setError("");
+    try {
+      const crear = await fetch(buildURL(API_CONFIG.services.ventas, API_CONFIG.endpoints.ventas.ordenes), {
+        method: "POST",
+        headers: API_CONFIG.defaultHeaders,
+        body: JSON.stringify({
+          cliente_id: cliente?.id ?? null,
+          items: carrito.map((item) => ({ producto_id: item.id, nombre_producto: item.nombre, cantidad: item.cantidad, precio_unitario: item.precio })),
+        }),
+      });
+      const orden = await crear.json();
+      if (!crear.ok) throw new Error(orden.error || orden.message || "No se pudo crear la orden.");
+
+      const pagar = await fetch(buildURL(API_CONFIG.services.ventas, API_CONFIG.endpoints.ventas.pagar.replace(":id", orden.orden_id)), {
+        method: "POST",
+        headers: API_CONFIG.defaultHeaders,
+        body: JSON.stringify({ monto_recibido: monto, metodo_pago: metodoPago, tipo_comprobante: tipoComprobante }),
+      });
+      const pago = await pagar.json();
+      if (!pagar.ok) throw new Error(pago.error || pago.message || "No se pudo registrar el pago.");
+
+      toast.success(`Venta ${pago.orden_id} pagada. Vuelto: S/ ${Number(pago.vuelto).toFixed(2)}`);
+      setCarrito([]);
+      setCliente(null);
+      setMontoRecibido("");
+      setCobroAbierto(false);
+    } catch (e) {
+      const mensaje = e instanceof Error ? e.message : "Error al procesar la venta.";
+      setError(mensaje);
+      toast.error(mensaje);
+    } finally {
+      setProcesando(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1>Nuevo Comprobante</h1>
-        <p className="text-muted-foreground">Crear un nuevo comprobante de venta</p>
+      <div><h1 className="text-2xl font-semibold">Punto de Venta</h1><p className="text-muted-foreground">Venta fisica conectada a los microservicios.</p></div>
+      {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card><CardHeader><CardTitle>Cliente frecuente (opcional)</CardTitle></CardHeader><CardContent className="space-y-3">
+            <div className="flex gap-2"><Input value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} placeholder="Nombre o telefono"/><Button variant="outline" onClick={buscarClientes}><Search className="h-4 w-4"/></Button></div>
+            {clientes.length > 0 && <div className="grid gap-2 sm:grid-cols-2">{clientes.map((actual) => <Button key={actual.id} variant={cliente?.id === actual.id ? "default" : "outline"} className="h-auto justify-start py-3" onClick={() => setCliente(actual)}><span className="text-left"><strong>{actual.nombre}</strong><br/><small>{actual.telefono}</small></span></Button>)}</div>}
+          </CardContent></Card>
+          <Card><CardHeader><CardTitle>Productos</CardTitle></CardHeader><CardContent className="space-y-4">
+            {cargando ? <Loader2 className="animate-spin"/> : <div className="flex gap-2"><Select value={productoId} onValueChange={setProductoId}><SelectTrigger><SelectValue placeholder="Seleccionar producto"/></SelectTrigger><SelectContent>{productos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre} - S/ {Number(p.precio).toFixed(2)}</SelectItem>)}</SelectContent></Select><Button onClick={agregarProducto} disabled={!productoId}><Plus className="mr-2 h-4 w-4"/>Agregar</Button></div>}
+            <Table><TableHeader><TableRow><TableHead>Producto</TableHead><TableHead>Cantidad</TableHead><TableHead>Precio</TableHead><TableHead>Subtotal</TableHead><TableHead/></TableRow></TableHeader><TableBody>
+              {carrito.map((item) => <TableRow key={item.id}><TableCell>{item.nombre}</TableCell><TableCell><Input className="w-20" type="number" min={1} value={item.cantidad} onChange={(e) => actualizarCantidad(item.id, Number(e.target.value))}/></TableCell><TableCell>S/ {Number(item.precio).toFixed(2)}</TableCell><TableCell>S/ {(item.precio * item.cantidad).toFixed(2)}</TableCell><TableCell><Button size="icon" variant="ghost" onClick={() => setCarrito((actual) => actual.filter((p) => p.id !== item.id))}><Trash2 className="h-4 w-4"/></Button></TableCell></TableRow>)}
+            </TableBody></Table>
+          </CardContent></Card>
+        </div>
+        <Card className="h-fit"><CardHeader><CardTitle className="flex items-center gap-2"><ShoppingCart className="h-5 w-5"/>Resumen</CardTitle></CardHeader><CardContent className="space-y-4"><p>{carrito.reduce((s, i) => s + i.cantidad, 0)} unidades</p><p className="text-3xl font-semibold">S/ {total.toFixed(2)}</p>{cliente && <p className="text-sm">Cliente: {cliente.nombre}</p>}<Button className="w-full" size="lg" disabled={carrito.length === 0} onClick={() => { setMontoRecibido(total.toFixed(2)); setCobroAbierto(true); }}>Cobrar</Button></CardContent></Card>
       </div>
 
-      {/* Mensaje de Caja Cerrada */}
-      {!cajaAbierta && (
-        <Card className="border-destructive bg-destructive/10">
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center justify-center text-center space-y-4 py-8">
-              <div className="w-20 h-20 rounded-full bg-destructive/20 flex items-center justify-center">
-                <AlertCircle className="h-10 w-10 text-destructive" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl text-destructive">¡Caja Cerrada!</h2>
-                <p className="text-muted-foreground max-w-md">
-                  Debe aperturar la caja antes de realizar una venta. 
-                  Por favor, diríjase al módulo de <strong>Apertura de Caja</strong> para comenzar.
-                </p>
-              </div>
-              <Button 
-                size="lg"
-                onClick={() => window.location.hash = '#apertura-caja'}
-                className="bg-destructive hover:bg-destructive/90"
-              >
-                Ir a Apertura de Caja
-              </Button>
-              <div className="mt-4 p-4 bg-muted rounded-lg text-left space-y-2 max-w-md">
-                <p className="text-sm font-medium">📋 Pasos requeridos:</p>
-                <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                  <li>Ir a <strong>Caja → Apertura de Caja</strong></li>
-                  <li>Registrar el fondo inicial de caja</li>
-                  <li>Confirmar la apertura</li>
-                  <li>Regresar a este módulo para realizar ventas</li>
-                </ol>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Contenido principal - Solo visible si la caja está abierta */}
-      {cajaAbierta && (
-        <>
-          {/* Alerta de Régimen */}
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Sistema configurado en <strong>Régimen RUS</strong> - Solo se pueden emitir Boletas de Venta
-            </AlertDescription>
-          </Alert>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Información del Comprobante</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Tipo de Comprobante</Label>
-                      <Select value={tipoComprobante} onValueChange={setTipoComprobante}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="boleta">Boleta</SelectItem>
-                          <SelectItem value="factura" disabled>Factura (No disponible en RUS)</SelectItem>
-                          <SelectItem value="nota-credito" disabled>Nota de Crédito (No disponible en RUS)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Fecha</Label>
-                      <Input 
-                        type="date" 
-                        value={fecha} 
-                        onChange={(e) => setFecha(e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Cliente (Opcional)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Escribir nombre del cliente..."
-                        value={clienteInput}
-                        onChange={(e) => setClienteInput(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Popover open={openClientes} onOpenChange={setOpenClientes}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openClientes}
-                            className="shrink-0"
-                          >
-                            <ChevronsUpDown className="h-4 w-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[400px] p-0" align="end">
-                          <Command>
-                            <CommandInput placeholder="Buscar cliente registrado..." />
-                            <CommandList>
-                              <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                              <CommandGroup heading="Clientes y Proveedores Registrados">
-                                {clientesRegistrados.map((cliente) => (
-                                  <CommandItem
-                                    key={cliente.id}
-                                    value={cliente.razonSocial}
-                                    onSelect={() => handleClienteSelect(cliente.razonSocial)}
-                                  >
-                                    <Check
-                                      className={`mr-2 h-4 w-4 ${
-                                        clienteSeleccionado === cliente.razonSocial ? "opacity-100" : "opacity-0"
-                                      }`}
-                                    />
-                                    <div>
-                                      <p>{cliente.razonSocial}</p>
-                                      <p className="text-xs text-muted-foreground">
-                                        {cliente.tipoDocumento}: {cliente.numeroDocumento}
-                                      </p>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Escribe libremente o selecciona de la lista de clientes registrados
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Método de Pago</Label>
-                    <Select value={metodoPago} onValueChange={setMetodoPago}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="efectivo">Efectivo</SelectItem>
-                        <SelectItem value="yape">YAPE</SelectItem>
-                        <SelectItem value="plin">PLIN</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Productos</CardTitle>
-                  <div className="flex gap-2">
-                    <Popover open={openPromociones} onOpenChange={setOpenPromociones}>
-                      <PopoverTrigger asChild>
-                        <Button size="sm" variant="outline">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Agregar Promoción
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-80 p-0">
-                        <Command>
-                          <CommandInput placeholder="Buscar promoción..." />
-                          <CommandList>
-                            <CommandEmpty>No hay promociones activas</CommandEmpty>
-                            <CommandGroup>
-                              {promocionesActivas.map((promocion) => (
-                                <CommandItem
-                                  key={promocion.id}
-                                  value={promocion.nombre}
-                                  onSelect={() => selectPromocion(promocion)}
-                                >
-                                  <div className="flex-1">
-                                    <p className="font-medium">{promocion.nombre}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      S/ {promocion.precioPromocion.toFixed(2)} - {promocion.productos.length} productos
-                                    </p>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <Button onClick={addItem} size="sm">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Agregar Producto
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {items.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
-                      No hay productos agregados. Haz clic en "Agregar Producto" para comenzar.
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Producto</TableHead>
-                          <TableHead className="w-24">Cantidad</TableHead>
-                          <TableHead className="w-32 text-right">Precio Unit.</TableHead>
-                          <TableHead className="w-32 text-right">Subtotal</TableHead>
-                          <TableHead className="w-16"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {items.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              {item.esPromocion ? (
-                                <div className="space-y-1">
-                                  <p className="font-medium">{item.producto}</p>
-                                  <p className="text-xs text-primary">🏷️ {item.promocionNombre}</p>
-                                </div>
-                              ) : (
-                                <Popover 
-                                  open={openProductos[item.id] || false} 
-                                  onOpenChange={(open) => setOpenProductos({ ...openProductos, [item.id]: open })}
-                                >
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      role="combobox"
-                                      className="w-full justify-between"
-                                    >
-                                      {item.producto || "Seleccionar producto..."}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-[350px] p-0">
-                                    <Command>
-                                      <CommandInput placeholder="Buscar producto..." />
-                                      <CommandList>
-                                        <CommandEmpty>No se encontró el producto.</CommandEmpty>
-                                        <CommandGroup>
-                                          {productosDisponibles.map((producto) => (
-                                            <CommandItem
-                                              key={producto.id}
-                                              value={producto.nombre}
-                                              onSelect={() => selectProducto(item.id, producto)}
-                                            >
-                                              <Check
-                                                className={`mr-2 h-4 w-4 ${
-                                                  item.productoId === producto.id ? "opacity-100" : "opacity-0"
-                                                }`}
-                                              />
-                                              <div className="flex-1">
-                                                <p>{producto.nombre}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                  S/ {producto.precio.toFixed(2)} - Stock: {producto.stock}
-                                                </p>
-                                              </div>
-                                            </CommandItem>
-                                          ))}
-                                        </CommandGroup>
-                                      </CommandList>
-                                    </Command>
-                                  </PopoverContent>
-                                </Popover>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={item.cantidad}
-                                onChange={(e) => updateItem(item.id, 'cantidad', parseInt(e.target.value) || 1)}
-                              />
-                            </TableCell>
-                            <TableCell className="text-right">
-                              S/. {item.precio.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              S/. {(item.cantidad * item.precio).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeItem(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Resumen</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No hay productos agregados
-                    </p>
-                  ) : (
-                    <>
-                      <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {items.map((item) => (
-                          <div key={item.id} className="flex justify-between text-sm py-2 border-b">
-                            <div className="flex-1">
-                              <p className="font-medium">{item.producto || "Sin producto"}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {item.cantidad} x S/. {item.precio.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium">S/. {(item.cantidad * item.precio).toFixed(2)}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t pt-3 mt-3">
-                        <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                          <span>Productos: {items.length}</span>
-                          <span>Unidades: {items.reduce((sum, item) => sum + item.cantidad, 0)}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span>Total:</span>
-                          <span className="text-2xl text-primary">S/. {total.toFixed(2)}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          * Régimen RUS no incluye IGV
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-muted">
-                <CardContent className="pt-6 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Serie:</span>
-                    <span>B001</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Número:</span>
-                    <span>{String(Math.floor(Math.random() * 10000)).padStart(6, '0')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Fecha:</span>
-                    <span>{new Date(fecha).toLocaleDateString('es-PE')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Método:</span>
-                    <span className="capitalize">{metodoPago}</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="space-y-3">
-                <Button onClick={handleSubmit} className="w-full" size="lg">
-                  <Save className="mr-2 h-5 w-5" />
-                  Guardar Comprobante
-                </Button>
-                <Button variant="outline" className="w-full" onClick={handleLimpiar}>
-                  Limpiar Formulario
-                </Button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <Dialog open={cobroAbierto} onOpenChange={setCobroAbierto}><DialogContent><DialogHeader><DialogTitle>Confirmar cobro</DialogTitle></DialogHeader><div className="space-y-4">
+        <div><Label>Comprobante</Label><Select value={tipoComprobante} onValueChange={(v) => setTipoComprobante(v as TipoComprobante)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="BOLETA">Boleta</SelectItem><SelectItem value="NOTA_PEDIDO">Nota de pedido</SelectItem></SelectContent></Select></div>
+        <div><Label>Metodo de pago</Label><Select value={metodoPago} onValueChange={(v) => setMetodoPago(v as MetodoPago)}><SelectTrigger><SelectValue/></SelectTrigger><SelectContent><SelectItem value="EFECTIVO">Efectivo</SelectItem><SelectItem value="YAPE">Yape</SelectItem><SelectItem value="PLIN">Plin</SelectItem></SelectContent></Select></div>
+        <div><Label>Monto recibido</Label><Input type="number" min={0} step="0.10" disabled={metodoPago !== "EFECTIVO"} value={metodoPago === "EFECTIVO" ? montoRecibido : total.toFixed(2)} onChange={(e) => setMontoRecibido(e.target.value)}/></div>
+        <div className={`rounded-lg p-4 text-center text-2xl font-semibold ${vuelto < 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>{vuelto < 0 ? `Faltan S/ ${Math.abs(vuelto).toFixed(2)}` : `Vuelto S/ ${vuelto.toFixed(2)}`}</div>
+      </div><DialogFooter><Button variant="outline" onClick={() => setCobroAbierto(false)}>Cancelar</Button><Button disabled={procesando || (metodoPago === "EFECTIVO" && vuelto < 0)} onClick={cobrar}>{procesando && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Confirmar venta</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );
 }

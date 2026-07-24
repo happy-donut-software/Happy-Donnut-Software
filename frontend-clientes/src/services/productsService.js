@@ -1,53 +1,20 @@
-// src/services/productsService.js
-// URL base del API Gateway. Si no viene por variable de entorno,
-// usamos por defecto http://localhost:8080 (entorno de desarrollo).
-const GATEWAY_BASE_URL = process.env.REACT_APP_GATEWAY_URL || 'http://localhost:8080';
+const GATEWAY_BASE_URL = process.env.REACT_APP_GATEWAY_URL || 'http://localhost:30080';
 
-// ----------------------------------------------------------------------
-// Función Auxiliar para llamadas públicas al API Gateway (sin token)
-// ----------------------------------------------------------------------
-async function apiCallPublic(endpoint, method = 'GET', body = null) {
-    const url = `${GATEWAY_BASE_URL}/api/v1${endpoint}`;
-    
-    const options = {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-    };
-
-    if (body && method !== 'GET') {
-        options.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(url, options);
-    const data = await response.json();
-
-    if (response.ok) {
-        return { success: true, data };
-    } else {
-        return { success: false, error: data, status: response.status };
-    }
+async function listar() {
+  const response = await fetch(`${GATEWAY_BASE_URL}/api/ventas/productos`, { headers: { Accept: 'application/json' } });
+  const data = await response.json();
+  return response.ok ? { success: true, data } : { success: false, error: data, status: response.status };
 }
 
-// ----------------------------------------------------------------------
-// 1. Obtener productos disponibles (público)
-// ----------------------------------------------------------------------
-export async function getAvailableProducts() {
-    return apiCallPublic('/products/available', 'GET');
-}
+export function getAvailableProducts() { return listar(); }
 
-// ----------------------------------------------------------------------
-// 2. Buscar productos
-// ----------------------------------------------------------------------
 export async function searchProducts(query) {
-    return apiCallPublic(`/products/search?q=${encodeURIComponent(query)}`, 'GET');
+  const result = await listar();
+  if (!result.success) return result;
+  const termino = query.trim().toLocaleLowerCase('es');
+  return { success: true, data: { productos: (result.data.productos || []).filter((producto) => producto.nombre.toLocaleLowerCase('es').includes(termino)) } };
 }
 
-// ----------------------------------------------------------------------
-// 3. Obtener categorías
-// ----------------------------------------------------------------------
 export async function getCategories() {
-    return apiCallPublic('/categories', 'GET');
+  return { success: true, data: [{ id: 'donas', nombre: 'Donas' }] };
 }

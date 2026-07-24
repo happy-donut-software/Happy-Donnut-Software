@@ -5,6 +5,10 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Dominio\Puertos\TurnoCajaRepositoryInterface;
 use App\Infraestructura\Persistencia\Repositorios\EloquentTurnoCajaRepository;
+use App\Dominio\Puertos\AcumuladoRusRepositoryInterface;
+use App\Aplicacion\Puertos\TransaccionInterface;
+use App\Infraestructura\Persistencia\Repositorios\EloquentAcumuladoRusRepository;
+use App\Infraestructura\Persistencia\LaravelTransaccion;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +24,8 @@ class AppServiceProvider extends ServiceProvider
             TurnoCajaRepositoryInterface::class,
             EloquentTurnoCajaRepository::class
         );
+        $this->app->bind(AcumuladoRusRepositoryInterface::class, EloquentAcumuladoRusRepository::class);
+        $this->app->bind(TransaccionInterface::class, LaravelTransaccion::class);
     }
 
     /**

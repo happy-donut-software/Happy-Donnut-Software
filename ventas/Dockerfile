@@ -52,10 +52,11 @@ COPY . .
 # Optimizamos dependencias para producción (reinstalamos sin dev)
 RUN composer install --no-dev --optimize-autoloader --no-scripts --prefer-dist
 
-# Optimizamos Laravel para producción (rutas, vistas y configuración en caché)
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+# La configuración llega por variables de entorno al ejecutar el contenedor.
+# Limpiamos manifests generados con dependencias de desarrollo (por ejemplo Laravel Pail)
+# y reconstruimos solo el descubrimiento de paquetes de producción.
+RUN rm -f bootstrap/cache/*.php && \
+    php artisan package:discover --ansi
 
 # ==============================================================================
 # STAGE 4: Producción Final
@@ -74,3 +75,24 @@ USER www-data
 # En producción, usamos el motor robusto PHP-FPM en lugar de artisan serve
 EXPOSE 9000
 CMD ["php-fpm"]
+# ==============================================================================
+# STAGE 5: Observabilidad local (OpenTelemetry + Laravel + PDO)
+# ==============================================================================
+FROM produccion AS observabilidad
+USER root
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN apk add --no-cache --virtual .otel-build $PHPIZE_DEPS \
+    && pecl install opentelemetry \
+    && docker-php-ext-enable opentelemetry \
+    && apk del .otel-build
+RUN composer require --no-interaction --no-progress --with-all-dependencies \
+    open-telemetry/sdk:1.14.0 \
+    open-telemetry/exporter-otlp:1.4.0 \
+    open-telemetry/opentelemetry-auto-laravel:1.7.0 \
+    open-telemetry/opentelemetry-auto-pdo:0.4.0 \
+    php-http/guzzle7-adapter:^1.0 \
+    nyholm/psr7:^1.8
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+USER www-data
+EXPOSE 8000
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

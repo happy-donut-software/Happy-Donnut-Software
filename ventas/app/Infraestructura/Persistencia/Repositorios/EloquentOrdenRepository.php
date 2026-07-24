@@ -9,6 +9,7 @@ use App\Dominio\Entidades\LineaOrden;
 use App\Dominio\ObjetosValor\EstadoOrden;
 use App\Dominio\Puertos\OrdenRepositoryInterface;
 use App\Infraestructura\Persistencia\Modelos\LineaOrdenModel;
+use App\Infraestructura\Persistencia\Modelos\EventoDominioModel;
 use App\Infraestructura\Persistencia\Modelos\OrdenVentaModel;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,10 @@ class EloquentOrdenRepository implements OrdenRepositoryInterface
                     'fecha_creacion' => $orden->obtenerFechaCreacion()->format('Y-m-d H:i:s'),
                     'estado' => $orden->obtenerEstado()->value,
                     'total' => $orden->calcularTotal(),
+                    'monto_recibido' => $orden->obtenerMontoRecibido(),
+                    'vuelto' => $orden->obtenerVuelto(),
+                    'metodo_pago' => $orden->obtenerMetodoPago(),
+                    'tipo_comprobante' => $orden->obtenerTipoComprobante(),
                 ]
             );
 
@@ -46,6 +51,20 @@ class EloquentOrdenRepository implements OrdenRepositoryInterface
         });
     }
 
+    /** @param array<string, mixed> $evento */
+    public function guardarPagoYEvento(OrdenVenta $orden, array $evento): void
+    {
+        DB::transaction(function () use ($orden, $evento): void {
+            $this->guardar($orden);
+            EventoDominioModel::create([
+                'id' => $evento['id'],
+                'nombre' => $evento['nombre'],
+                'agregado_id' => $orden->obtenerId(),
+                'payload' => $evento['payload'],
+                'ocurrido_en' => $evento['ocurrido_en'],
+            ]);
+        });
+    }
     public function buscarPorId(string $id): ?OrdenVenta
     {
         $modelo = OrdenVentaModel::with('lineas')->find($id);
@@ -59,7 +78,11 @@ class EloquentOrdenRepository implements OrdenRepositoryInterface
             $modelo->id,
             $modelo->cliente_id,
             new DateTimeImmutable($modelo->fecha_creacion->toDateTimeString()),
-            EstadoOrden::from($modelo->estado)
+            EstadoOrden::from($modelo->estado),
+            $modelo->monto_recibido === null ? null : (float) $modelo->monto_recibido,
+            $modelo->vuelto === null ? null : (float) $modelo->vuelto,
+            $modelo->metodo_pago,
+            $modelo->tipo_comprobante
         );
 
         // Inyectamos las líneas saltándonos la validación de estado (porque ya existen)

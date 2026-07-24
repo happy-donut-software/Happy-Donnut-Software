@@ -13,3 +13,9 @@ Route::prefix('tienda/carrito')->group(function () {
     // POST /api/tienda/carrito/remover -> Quita un producto por completo
     Route::post('/remover', [CarritoController::class, 'remover']);
 });
+
+Route::get('/metrics', fn () => response(
+    \App\Http\Middleware\RegistrarMetricas::exportar(),
+    200,
+    ['Content-Type' => 'text/plain; version=0.0.4; charset=utf-8']
+));

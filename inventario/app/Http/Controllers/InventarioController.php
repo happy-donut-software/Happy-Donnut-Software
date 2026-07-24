@@ -8,6 +8,7 @@ use App\Aplicacion\CasosUso\ReabastecerStockUseCase;
 use App\Aplicacion\CasosUso\DescontarStockUseCase;
 use App\Aplicacion\DTOs\AjustarStockDTO;
 use DomainException;
+use App\Dominio\Puertos\ProductoRepositoryInterface;
 
 class InventarioController extends Controller
 {
@@ -52,4 +53,15 @@ class InventarioController extends Controller
             return response()->json(['error' => $e->getMessage()], 400);
         }
     }
-}
+
+    public function consultar(string $id, ProductoRepositoryInterface $productos): JsonResponse
+    {
+        $producto = $productos->buscarPorId($id);
+        if ($producto === null) { return response()->json(['error' => 'Producto no encontrado.'], 404); }
+        return response()->json([
+            'id' => $producto->obtenerId(), 'nombre' => $producto->obtenerNombre(),
+            'stock_disponible' => $producto->obtenerStockDisponible()->obtenerValor(),
+            'stock_minimo' => $producto->obtenerStockMinimo(),
+            'requiere_reabastecimiento' => $producto->requiereReabastecimiento(),
+        ]);
+    }}

@@ -12,7 +12,7 @@ use App\Infraestructura\Persistencia\Modelos\UsuarioModel;
 use DomainException;
 
 // Importaciones estándar de OpenTelemetry para la trazabilidad y observabilidad
-use OpenTelemetry\API\Trace\TracerProviderInterface;
+use OpenTelemetry\API\Globals;
 use OpenTelemetry\API\Trace\StatusCode;
 
 class AuthController extends Controller
@@ -30,17 +30,15 @@ class AuthController extends Controller
             'rol' => 'required|string', // admin, cajero, cliente
         ]);
 
-        // 1. Resolver el proveedor de trazas e iniciar el Span de Registro
-        $tracer = app(TracerProviderInterface::class)->getTracer('usuarios-auth-tracer');
-        $span = $tracer->spanBuilder('usuario-registro')
-            ->setAttribute('http.method', $request->method())
-            ->setAttribute('http.url', $request->fullUrl())
-            ->setAttribute('user.register_email', $request->email)
-            ->setAttribute('user.register_role', $request->rol)
-            ->startSpan();
-
-        // 2. Activar el ámbito (scope) del Span en el contexto actual
-        $scope = $span->activate();
+        $span = null;
+        $scope = null;
+        if (class_exists(Globals::class)) {
+            $span = Globals::tracerProvider()->getTracer('usuarios-auth-tracer')->spanBuilder('usuario-registro')
+                ->setAttribute('http.method', $request->method())
+                ->setAttribute('user.register_role', $request->rol)
+                ->startSpan();
+            $scope = $span?->activate();
+        }
 
         try {
             $dto = new RegistrarUsuarioDTO(
@@ -54,9 +52,9 @@ class AuthController extends Controller
             $usuario = $useCase->ejecutar($dto);
 
             // 3. Registrar atributos de éxito en el Span
-            $span->setAttribute('auth.status', 'created');
-            $span->setAttribute('user.id', $usuario->obtenerId());
-            $span->setStatus(StatusCode::STATUS_OK, 'Usuario creado con éxito');
+            $span?->setAttribute('auth.status', 'created');
+            $span?->setAttribute('user.id', $usuario->obtenerId());
+            $span?->setStatus(StatusCode::STATUS_OK, 'Usuario creado con éxito');
 
             return response()->json([
                 'mensaje' => 'Usuario registrado exitosamente.',
@@ -65,24 +63,24 @@ class AuthController extends Controller
 
         } catch (DomainException $e) {
             // Capturar errores lógicos de negocio en la telemetría
-            $span->setAttribute('auth.status', 'validation_failed');
-            $span->setStatus(StatusCode::STATUS_ERROR, $e->getMessage());
-            $span->recordException($e);
+            $span?->setAttribute('auth.status', 'validation_failed');
+            $span?->setStatus(StatusCode::STATUS_ERROR, $e->getMessage());
+            $span?->recordException($e);
 
             return response()->json(['error' => $e->getMessage()], 400);
 
         } catch (\Exception $e) {
             // Capturar colapsos inesperados o caídas de infraestructura
-            $span->setAttribute('auth.status', 'infrastructure_error');
-            $span->setStatus(StatusCode::STATUS_ERROR, 'Fallo crítico de registro');
-            $span->recordException($e);
+            $span?->setAttribute('auth.status', 'infrastructure_error');
+            $span?->setStatus(StatusCode::STATUS_ERROR, 'Fallo crítico de registro');
+            $span?->recordException($e);
 
             return response()->json(['error' => 'Error interno del servidor al registrar.'], 500);
 
         } finally {
             // 4. Asegurar el cierre del Span y desvincular el scope para enviarlo al Collector
-            $span->end();
-            $scope->detach();
+            $span?->end();
+            $scope?->detach();
         }
     }
 
@@ -97,17 +95,15 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // 1. Resolver el proveedor de trazas de OTel e iniciar el Span de Inicio de Sesión
-        $tracer = app(TracerProviderInterface::class)->getTracer('usuarios-auth-tracer');
-        $span = $tracer->spanBuilder('usuario-inicio-sesion')
-            ->setAttribute('http.method', $request->method())
-            ->setAttribute('http.url', $request->fullUrl())
-            ->setAttribute('auth.login_attempt_email', $request->email)
-            ->setAttribute('auth.provider', 'laravel-sanctum')
-            ->startSpan();
-
-        // 2. Activar el scope en el hilo de ejecución actual
-        $scope = $span->activate();
+        $span = null;
+        $scope = null;
+        if (class_exists(Globals::class)) {
+            $span = Globals::tracerProvider()->getTracer('usuarios-auth-tracer')->spanBuilder('usuario-inicio-sesion')
+                ->setAttribute('http.method', $request->method())
+                ->setAttribute('auth.provider', 'laravel-sanctum')
+                ->startSpan();
+            $scope = $span?->activate();
+        }
 
         try {
             // 1. El dominio valida matemáticamente si las credenciales son correctas
@@ -122,10 +118,10 @@ class AuthController extends Controller
             $token = $usuarioModel->createToken('auth_token')->plainTextToken;
 
             // 3. Enriquecer el Span con datos finales del éxito de autenticación
-            $span->setAttribute('auth.status', 'success');
-            $span->setAttribute('user.id', $usuarioDominio->obtenerId());
-            $span->setAttribute('user.rol', $usuarioDominio->obtenerRol()->value);
-            $span->setStatus(StatusCode::STATUS_OK, 'Autenticación exitosa');
+            $span?->setAttribute('auth.status', 'success');
+            $span?->setAttribute('user.id', $usuarioDominio->obtenerId());
+            $span?->setAttribute('user.rol', $usuarioDominio->obtenerRol()->value);
+            $span?->setStatus(StatusCode::STATUS_OK, 'Autenticación exitosa');
 
             return response()->json([
                 'mensaje' => 'Login exitoso.',
@@ -140,25 +136,25 @@ class AuthController extends Controller
 
         } catch (DomainException $e) {
             // Registrar fallos de autenticación (Credenciales incorrectas) en OTel como error controlado
-            $span->setAttribute('auth.status', 'unauthorized');
-            $span->setAttribute('auth.failure_reason', $e->getMessage());
-            $span->setStatus(StatusCode::STATUS_ERROR, $e->getMessage());
-            $span->recordException($e);
+            $span?->setAttribute('auth.status', 'unauthorized');
+            $span?->setAttribute('auth.failure_reason', $e->getMessage());
+            $span?->setStatus(StatusCode::STATUS_ERROR, $e->getMessage());
+            $span?->recordException($e);
 
             return response()->json(['error' => $e->getMessage()], 401);
 
         } catch (\Exception $e) {
             // Capturar errores críticos (p. ej., colapso de base de datos causado por Chaos Mesh)
-            $span->setAttribute('auth.status', 'server_error');
-            $span->setStatus(StatusCode::STATUS_ERROR, 'Excepción en el adaptador de persistencia o red');
-            $span->recordException($e); // Guarda el stack trace completo del fallo
+            $span?->setAttribute('auth.status', 'server_error');
+            $span?->setStatus(StatusCode::STATUS_ERROR, 'Excepción en el adaptador de persistencia o red');
+            $span?->recordException($e); // Guarda el stack trace completo del fallo
 
             return response()->json(['error' => 'Fallo crítico interno del sistema.'], 500);
 
         } finally {
             // 4. Obligatorio finalizar el span para evitar fugas de memoria y emitir la traza
-            $span->end();
-            $scope->detach();
+            $span?->end();
+            $scope?->detach();
         }
     }
 

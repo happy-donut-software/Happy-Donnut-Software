@@ -4,10 +4,19 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use App\Infraestructura\Persistencia\Modelos\ProductoVentaModel;
 
 class OrdenesApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        ProductoVentaModel::create(['id' => 'prod_donachoco', 'nombre' => 'Dona de Chocolate', 'precio' => 3.50, 'activo' => true]);
+        ProductoVentaModel::create(['id' => 'prod_donavainilla', 'nombre' => 'Dona de Vainilla', 'precio' => 3.00, 'activo' => true]);
+    }
+
 
     private function crearOrden(): string
     {
@@ -69,7 +78,9 @@ class OrdenesApiTest extends TestCase
     {
         $ordenId = $this->crearOrden();
 
-        $response = $this->postJson("/api/ventas/ordenes/{$ordenId}/pagar");
+        $response = $this->postJson("/api/ventas/ordenes/{$ordenId}/pagar", [
+            'monto_recibido' => 20, 'metodo_pago' => 'EFECTIVO', 'tipo_comprobante' => 'BOLETA',
+        ]);
 
         $response->assertOk()
             ->assertJson([
@@ -82,11 +93,16 @@ class OrdenesApiTest extends TestCase
             'id' => $ordenId,
             'estado' => 'pagada',
         ]);
+
+        $this->assertDatabaseHas('eventos_dominio', [
+            'nombre' => 'VentaFinalizada.v1',
+            'agregado_id' => $ordenId,
+        ]);
     }
 
     public function test_pagar_orden_inexistente_retorna_error(): void
     {
-        $response = $this->postJson('/api/ventas/ordenes/ord_inexistente/pagar');
+        $response = $this->postJson('/api/ventas/ordenes/ord_inexistente/pagar', ['monto_recibido' => 10]);
 
         $response->assertStatus(400)
             ->assertJson(['error' => 'La orden especificada no existe.']);
@@ -96,9 +112,11 @@ class OrdenesApiTest extends TestCase
     {
         $ordenId = $this->crearOrden();
 
-        $this->postJson("/api/ventas/ordenes/{$ordenId}/pagar")->assertOk();
+        $this->postJson("/api/ventas/ordenes/{$ordenId}/pagar", ['monto_recibido' => 10])->assertOk();
 
-        $response = $this->postJson("/api/ventas/ordenes/{$ordenId}/pagar");
+        $response = $this->postJson("/api/ventas/ordenes/{$ordenId}/pagar", [
+            'monto_recibido' => 20, 'metodo_pago' => 'EFECTIVO', 'tipo_comprobante' => 'BOLETA',
+        ]);
 
         $response->assertStatus(400)
             ->assertJson(['error' => 'Esta orden no está en estado pendiente para ser pagada.']);
@@ -112,5 +130,16 @@ class OrdenesApiTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+    }
+    public function test_ignora_precio_manipulado_por_el_cliente(): void
+    {
+        $response = $this->postJson('/api/ventas/ordenes', [
+            'items' => [[
+                'producto_id' => 'prod_donachoco', 'nombre_producto' => 'Alterado',
+                'cantidad' => 2, 'precio_unitario' => 0,
+            ]],
+        ]);
+        $response->assertCreated()->assertJson(['total' => 7.0]);
+        $this->assertDatabaseHas('lineas_orden', ['nombre_producto' => 'Dona de Chocolate', 'precio_unitario' => 3.50]);
     }
 }

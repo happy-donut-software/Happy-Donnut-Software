@@ -15,4 +15,7 @@ interface OrdenRepositoryInterface
 {
     public function guardar(OrdenVenta $orden): void;
     public function buscarPorId(string $id): ?OrdenVenta;
+
+    /** @param array<string, mixed> $evento */
+    public function guardarPagoYEvento(OrdenVenta $orden, array $evento): void;
 }

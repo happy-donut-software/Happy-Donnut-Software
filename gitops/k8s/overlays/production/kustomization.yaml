@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: happy-donut
+resources:
+  - ../../base
+  - namespace.yaml
+  - ../../../../observability/prometheus-rules.yaml
+images:
+  - {name: ghcr.io/happy-donut-software/happy-donnut-software/ventas, newTag: REPLACE_WITH_GIT_SHA}
+  - {name: ghcr.io/happy-donut-software/happy-donnut-software/inventario, newTag: REPLACE_WITH_GIT_SHA}
+  - {name: ghcr.io/happy-donut-software/happy-donnut-software/usuarios, newTag: REPLACE_WITH_GIT_SHA}
+  - {name: ghcr.io/happy-donut-software/happy-donnut-software/finanzas, newTag: REPLACE_WITH_GIT_SHA}
+  - {name: ghcr.io/happy-donut-software/happy-donnut-software/tienda-virtual, newTag: REPLACE_WITH_GIT_SHA}

@@ -26,3 +26,12 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+tmp/
+.docker-config/
+.pnpm-store/
+qa-e2e/node_modules/
+evidencias/
+.local-port-forward/
+
+frontend-administrativo/pnpm-lock.yaml
+frontend-administrativo/pnpm-workspace.yaml

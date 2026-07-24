@@ -33,6 +33,6 @@ class TurnoCajaModel extends Model
 
     public function movimientos(): HasMany
     {
-        return $this->hasMany(MovimientoCajaModel::class, 'turno_id', 'id');
+        return $this->hasMany(MovimientoCajaModel::class, 'turno_caja_id', 'id');
     }
 }

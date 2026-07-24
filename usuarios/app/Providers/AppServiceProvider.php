@@ -7,6 +7,8 @@ use App\Dominio\Puertos\UsuarioRepositoryInterface;
 use App\Dominio\Puertos\PasswordHasherInterface;
 use App\Infraestructura\Persistencia\Repositorios\EloquentUsuarioRepository;
 use App\Infraestructura\Seguridad\LaravelPasswordHasher;
+use App\Dominio\Puertos\ClienteFrecuenteRepositoryInterface;
+use App\Infraestructura\Persistencia\Repositorios\EloquentClienteFrecuenteRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
             PasswordHasherInterface::class,
             LaravelPasswordHasher::class
         );
+        $this->app->bind(ClienteFrecuenteRepositoryInterface::class, EloquentClienteFrecuenteRepository::class);
     }
 
     public function boot(): void

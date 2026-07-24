@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata: {name: happy-donut-slo, labels: {release: prometheus}}
+spec:
+  groups:
+    - name: happy-donut.slo
+      rules:
+        - alert: HappyDonutFastBurnRate
+          expr: |
+            (
+              sum(rate(http_requests_total{namespace="happy-donut",status=~"5.."}[5m]))
+              / clamp_min(sum(rate(http_requests_total{namespace="happy-donut"}[5m])), 1)
+            ) > 0.0144
+            and
+            (
+              sum(rate(http_requests_total{namespace="happy-donut",status=~"5.."}[1h]))
+              / clamp_min(sum(rate(http_requests_total{namespace="happy-donut"}[1h])), 1)
+            ) > 0.0144
+          for: 5m
+          labels: {severity: critical}
+          annotations: {summary: "Consumo rapido del presupuesto de error (14.4x)"}
+        - alert: HappyDonutSlowBurnRate
+          expr: |
+            (
+              sum(rate(http_requests_total{namespace="happy-donut",status=~"5.."}[30m]))
+              / clamp_min(sum(rate(http_requests_total{namespace="happy-donut"}[30m])), 1)
+            ) > 0.006
+            and
+            (
+              sum(rate(http_requests_total{namespace="happy-donut",status=~"5.."}[6h]))
+              / clamp_min(sum(rate(http_requests_total{namespace="happy-donut"}[6h])), 1)
+            ) > 0.006
+          for: 30m
+          labels: {severity: warning}
+          annotations: {summary: "Consumo sostenido del presupuesto de error (6x)"}
+        - alert: HappyDonutHighLatency
+          expr: histogram_quantile(0.95, sum by (le, service) (rate(http_request_duration_seconds_bucket{namespace="happy-donut"}[5m]))) > 0.5
+          for: 10m
+          labels: {severity: warning}
+          annotations: {summary: "Latencia p95 superior a 500 ms"}
+        - alert: HappyDonutOutboxBacklog
+          expr: happy_donut_outbox_pending{namespace="happy-donut"} > 20
+          for: 5m
+          labels: {severity: warning}
+          annotations: {summary: "La outbox acumula mas de 20 eventos pendientes"}
+        - alert: HappyDonutDeploymentUnavailable
+          expr: kube_deployment_status_replicas_available{namespace="happy-donut"} < 1
+          for: 2m
+          labels: {severity: critical}
+          annotations: {summary: "Deployment sin replicas disponibles"}

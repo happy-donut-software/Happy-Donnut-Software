@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Dominio\Puertos\OrdenRepositoryInterface;
 use App\Infraestructura\Persistencia\Repositorios\EloquentOrdenRepository;
+use App\Dominio\Puertos\ProductoVentaRepositoryInterface;
+use App\Infraestructura\Persistencia\Repositorios\EloquentProductoVentaRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
             OrdenRepositoryInterface::class,
             EloquentOrdenRepository::class
         );
+        $this->app->bind(ProductoVentaRepositoryInterface::class, EloquentProductoVentaRepository::class);
     }
 
     public function boot(): void

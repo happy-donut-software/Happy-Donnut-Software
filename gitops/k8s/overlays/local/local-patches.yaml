@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata: {name: happy-donut-secrets}
+stringData:
+  APP_KEY: base64:aGFwcHktZG9udXQtbG9jYWwta2V5LTMyLWJ5dGVzISE=
+  DB_USERNAME: happy_donut
+  DB_PASSWORD: happy_donut_local
+  RABBITMQ_USER: happy_donut
+  RABBITMQ_PASSWORD: happy_donut_local
+  EVENTOS_SECRET: happy_donut_eventos_local
+  INVENTARIO_EVENT_URL: http://servicio-inventario/api/inventario/eventos/venta-finalizada
+  FINANZAS_EVENT_URL: http://servicio-finanzas/api/finanzas/eventos/venta-finalizada

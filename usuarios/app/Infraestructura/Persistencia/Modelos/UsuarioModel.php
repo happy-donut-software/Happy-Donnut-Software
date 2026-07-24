@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infraestructura\Persistencia\Modelos;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -12,7 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
  * IMPORTANTE: Usamos el trait "HasApiTokens" para que Sanctum pueda generar
  * tokens de acceso vinculados a este modelo.
  */
-class UsuarioModel extends Model
+class UsuarioModel extends Authenticatable
 {
     use HasApiTokens;
 

@@ -15,7 +15,8 @@ class ProductoInventario
     public function __construct(
         private readonly string $id,
         private readonly string $nombre,
-        private CantidadStock $stockDisponible
+        private CantidadStock $stockDisponible,
+        private readonly int $stockMinimo = 0
     ) {
     }
 
@@ -32,6 +33,13 @@ class ProductoInventario
     public function obtenerStockDisponible(): CantidadStock
     {
         return $this->stockDisponible;
+    }
+
+    public function obtenerStockMinimo(): int { return $this->stockMinimo; }
+
+    public function requiereReabastecimiento(): bool
+    {
+        return $this->stockDisponible->obtenerValor() <= $this->stockMinimo;
     }
 
     /**

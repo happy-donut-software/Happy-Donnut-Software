@@ -1,0 +1,31 @@
+mode: deployment
+fullnameOverride: happy-donut-otel-collector
+image:
+  repository: otel/opentelemetry-collector-contrib
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc: {endpoint: 0.0.0.0:4317}
+        http: {endpoint: 0.0.0.0:4318}
+  processors:
+    memory_limiter: {check_interval: 1s, limit_mib: 256}
+    batch: {}
+  exporters:
+    otlphttp/tempo:
+      endpoint: http://tempo.observability.svc.cluster.local:4318
+    debug: {verbosity: basic}
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlphttp/tempo, debug]
+ports:
+  otlp:
+    enabled: true
+  otlp-http:
+    enabled: true
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {cpu: 500m, memory: 512Mi}

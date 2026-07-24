@@ -1,0 +1,17 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: {name: inventario-delay, namespace: happy-donut}
+spec:
+  action: delay
+  mode: one
+  duration: 120s
+  selector:
+    namespaces: [happy-donut]
+    labelSelectors: {app.kubernetes.io/name: servicio-inventario}
+  delay: {latency: 300ms, correlation: "50", jitter: 50ms}
+  direction: both
+  target:
+    mode: all
+    selector:
+      namespaces: [happy-donut]
+      labelSelectors: {app.kubernetes.io/name: servicio-ventas}

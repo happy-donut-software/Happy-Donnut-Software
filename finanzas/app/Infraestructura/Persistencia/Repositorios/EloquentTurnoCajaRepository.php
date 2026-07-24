@@ -19,10 +19,10 @@ class EloquentTurnoCajaRepository implements TurnoCajaRepositoryInterface
 {
     public function guardar(TurnoCaja $turno): void
     {
-        // Usamos una transacción para garantizar que Turno y Movimientos se guarden juntos o ninguno.
+        // Usamos una transacciÃ³n para garantizar que Turno y Movimientos se guarden juntos o ninguno.
         DB::transaction(function () use ($turno) {
             
-            // 1. Guardar o actualizar la Raíz del Agregado (El Turno)
+            // 1. Guardar o actualizar la RaÃ­z del Agregado (El Turno)
             TurnoCajaModel::updateOrCreate(
                 ['id' => $turno->obtenerId()],
                 [
@@ -83,16 +83,16 @@ class EloquentTurnoCajaRepository implements TurnoCajaRepositoryInterface
             $modelo->id,
             $modelo->cajero_id,
             new Monto((float)$modelo->monto_apertura),
-            new DateTimeImmutable($modelo->fecha_inicio),
+            DateTimeImmutable::createFromInterface($modelo->fecha_inicio),
             EstadoTurno::from($modelo->estado)
         );
 
-        // Si el turno ya fue cerrado, le inyectamos la fecha mediante reflexión o 
+        // Si el turno ya fue cerrado, le inyectamos la fecha mediante reflexiÃ³n o 
         // simulando el cierre (como el constructor es estricto). 
-        // En un caso real más complejo se usa un "Reconstitutor" o se pasa al constructor.
+        // En un caso real mÃ¡s complejo se usa un "Reconstitutor" o se pasa al constructor.
         if ($modelo->fecha_cierre) {
             $propiedad = new \ReflectionProperty(TurnoCaja::class, 'fechaCierre');
-            $propiedad->setValue($turno, new DateTimeImmutable($modelo->fecha_cierre));
+            $propiedad->setValue($turno, DateTimeImmutable::createFromInterface($modelo->fecha_cierre));
         }
 
         // Reconstruimos e inyectamos los movimientos
@@ -105,7 +105,7 @@ class EloquentTurnoCajaRepository implements TurnoCajaRepositoryInterface
                 $movModel->descripcion
             );
             
-            // Inyectamos saltándonos validaciones usando Reflexión 
+            // Inyectamos saltÃ¡ndonos validaciones usando ReflexiÃ³n 
             // ya que son datos que YA ocurrieron en el pasado.
             $propiedadMovs = new \ReflectionProperty(TurnoCaja::class, 'movimientos');
             $movimientosActuales = $propiedadMovs->getValue($turno);

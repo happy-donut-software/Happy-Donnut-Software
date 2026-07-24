@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: servicio-finanzas
+  labels: {app.kubernetes.io/name: servicio-finanzas, app.kubernetes.io/part-of: happy-donut}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app.kubernetes.io/name: servicio-finanzas}}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: servicio-finanzas, app.kubernetes.io/part-of: happy-donut}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 82, runAsGroup: 82, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: app
+          image: ghcr.io/happy-donut-software/happy-donnut-software/finanzas:develop
+          imagePullPolicy: IfNotPresent
+          command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+          ports: [{name: http, containerPort: 8000}]
+          envFrom:
+            - configMapRef: {name: happy-donut-config}
+            - secretRef: {name: happy-donut-secrets}
+          env:
+            - {name: DB_HOST, value: bd-finanzas}
+            - {name: DB_DATABASE, value: finanzas_db}
+            - {name: SERVICE_NAME, value: "finanzas"}
+            - {name: OTEL_SERVICE_NAME, value: "finanzas"}
+          readinessProbe: {httpGet: {path: /up, port: http}, initialDelaySeconds: 20, timeoutSeconds: 5, periodSeconds: 10, failureThreshold: 6}
+          livenessProbe: {httpGet: {path: /up, port: http}, initialDelaySeconds: 60, timeoutSeconds: 5, periodSeconds: 20}
+          resources:
+            requests: {cpu: 100m, memory: 192Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: servicio-finanzas
+  labels: {app.kubernetes.io/name: servicio-finanzas, app.kubernetes.io/part-of: happy-donut}
+spec:
+  selector: {app.kubernetes.io/name: servicio-finanzas}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: {name: servicio-finanzas}
+spec:
+  minAvailable: 1
+  selector: {matchLabels: {app.kubernetes.io/name: servicio-finanzas}}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: servicio-finanzas}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: servicio-finanzas}
+  minReplicas: 2
+  maxReplicas: 6
+  behavior:
+    scaleDown: {stabilizationWindowSeconds: 300}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 70}

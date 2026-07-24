@@ -1,70 +1,44 @@
-# Happy Donuts - API Endpoints Documentation
+# Endpoints implementados
 
-## Overview
-Microservicios implementados para Happy Donuts:
-- **Product Service**: Gestión de productos y categorías
-- **Inventory Service**: Gestión de inventario y recetas
-- **Order Service**: Gestión de órdenes y ventas
-- **API Gateway**: Autenticación y routing
+La fuente contractual es `openapi/openapi.yaml` (OpenAPI 3.1). El gateway Kubernetes expone `http://localhost:30080/api`.
 
----
+## Ventas
 
-## Product Service (Port 8001)
+- `GET /ventas/productos`
+- `POST /ventas/ordenes`
+- `POST /ventas/ordenes/{id}/pagar`
 
-### Productos
-```
-GET    /api/v1/products/available    - Productos disponibles para clientes
-GET    /api/v1/products/search?q=     - Buscar productos
-GET    /api/v1/products               - Listar productos (admin)
-POST   /api/v1/products               - Crear producto (admin)
-GET    /api/v1/products/{id}          - Ver producto
-PUT    /api/v1/products/{id}          - Actualizar producto (admin)
-DELETE /api/v1/products/{id}          - Eliminar producto (admin)
-PUT    /api/v1/products/{id}/status   - Cambiar estado (admin)
-```
+## Inventario
 
-### Categorías
-```
-GET    /api/v1/categories             - Listar categorías
-POST   /api/v1/categories             - Crear categoría (admin)
-GET    /api/v1/categories/{id}        - Ver categoría
-PUT    /api/v1/categories/{id}        - Actualizar categoría (admin)
-DELETE /api/v1/categories/{id}        - Eliminar categoría (admin)
-```
+- `POST /inventario/stock/reabastecer`
+- `POST /inventario/stock/descontar`
+- `GET /inventario/stock/{id}`
+- `POST /inventario/eventos/venta-finalizada` (interno, `X-Eventos-Secret`)
 
-### Promociones
-```
-GET    /api/v1/promotions/active      - Promociones activas
-GET    /api/v1/promotions             - Listar promociones (admin)
-POST   /api/v1/promotions             - Crear promoción (admin)
-GET    /api/v1/promotions/{id}        - Ver promoción
-PUT    /api/v1/promotions/{id}        - Actualizar promoción (admin)
-DELETE /api/v1/promotions/{id}        - Eliminar promoción (admin)
-```
+## Finanzas
 
----
+- `POST /finanzas/caja/abrir`
+- `POST /finanzas/caja/movimiento`
+- `POST /finanzas/caja/cerrar`
+- `GET /finanzas/rus/{periodo}`
+- `POST /finanzas/eventos/venta-finalizada` (interno, `X-Eventos-Secret`)
 
-## Inventory Service (Port 8002)
+## Usuarios
 
-### Inventario
-```
-GET    /api/v1/inventory              - Ver inventario completo
-POST   /api/v1/inventory/reserve      - Reservar inventario
-POST   /api/v1/inventory/release     - Liberar inventario
-GET    /api/v1/inventory/check/{productId}/{quantity} - Verificar disponibilidad
-PUT    /api/v1/inventory/adjust       - Ajustar inventario manual
-```
+- `POST /usuarios/registrar`
+- `POST /usuarios/login`
+- `GET /usuarios/me`
+- `POST /usuarios/logout`
+- `GET /usuarios/clientes-frecuentes?buscar=`
 
-### Insumos
-```
-GET    /api/v1/insumos                - Listar insumos
-POST   /api/v1/insumos                - Crear insumo (admin)
-GET    /api/v1/insumos/{id}           - Ver insumo
-PUT    /api/v1/insumos/{id}           - Actualizar insumo (admin)
-DELETE /api/v1/insumos/{id}           - Eliminar insumo (admin)
-```
+## Tienda virtual
 
-### Lotes de Insumos
-```
-GET    /yez /api经过了v1/l.
-```
+- `GET /tienda/carrito/{cliente_id}`
+- `POST /tienda/carrito/agregar`
+- `POST /tienda/carrito/remover`
+
+## Observabilidad
+
+Cada microservicio expone `GET /metrics` mediante acceso directo interno. Prometheus lo consulta por `ServiceMonitor`.
+
+Las rutas históricas `/api/v1/*` no forman parte del producto entregado y no deben usarse.

@@ -21,12 +21,14 @@ class OrdenVentaModel extends Model
         'cliente_id',
         'fecha_creacion',
         'estado',
-        'total' // Lo guardamos pre-calculado para facilitar reportes
+        'total', 'monto_recibido', 'vuelto', 'metodo_pago', 'tipo_comprobante'
     ];
 
     protected $casts = [
         'fecha_creacion' => 'datetime',
         'total' => 'decimal:2',
+        'monto_recibido' => 'decimal:2',
+        'vuelto' => 'decimal:2',
     ];
 
     public function lineas(): HasMany

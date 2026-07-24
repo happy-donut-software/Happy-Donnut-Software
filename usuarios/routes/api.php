@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClienteFrecuenteController;
 
 Route::prefix('usuarios')->group(function () {
     //--------------------------------------------------------
@@ -26,3 +27,11 @@ Route::prefix('usuarios')->group(function () {
         
     });
 });
+
+Route::get('/metrics', fn () => response(
+    \App\Http\Middleware\RegistrarMetricas::exportar(),
+    200,
+    ['Content-Type' => 'text/plain; version=0.0.4; charset=utf-8']
+));
+
+Route::get('/usuarios/clientes-frecuentes', [ClienteFrecuenteController::class, 'buscar']);

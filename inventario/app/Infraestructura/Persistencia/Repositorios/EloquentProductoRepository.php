@@ -22,7 +22,8 @@ class EloquentProductoRepository implements ProductoRepositoryInterface
         return new ProductoInventario(
             $modelo->id,
             $modelo->nombre,
-            new CantidadStock((int) $modelo->stock_disponible)
+            new CantidadStock((int) $modelo->stock_disponible),
+            (int) $modelo->stock_minimo
         );
     }
 
@@ -33,6 +34,7 @@ class EloquentProductoRepository implements ProductoRepositoryInterface
             [
                 'nombre' => $producto->obtenerNombre(),
                 'stock_disponible' => $producto->obtenerStockDisponible()->obtenerValor(),
+                'stock_minimo' => $producto->obtenerStockMinimo(),
             ]
         );
     }

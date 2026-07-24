@@ -293,6 +293,7 @@ services:
   frontend-clientes:
     build:
       context: ./frontend-clientes
+      target: development
     container_name: happydonut-frontend-clientes
     restart: unless-stopped
     volumes:
@@ -310,6 +311,7 @@ services:
   frontend-administrativo:
     build:
       context: ./frontend-administrativo
+      target: development
     container_name: happydonut-frontend-administrativo
     restart: unless-stopped
     volumes:

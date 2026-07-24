@@ -18,10 +18,12 @@ class ProductoInventarioModel extends Model
     protected $fillable = [
         'id',
         'nombre',
-        'stock_disponible'
+        'stock_disponible',
+        'stock_minimo'
     ];
 
     protected $casts = [
-        'stock_disponible' => 'integer',
+        'stock_disponible',
+        'stock_minimo' => 'integer',
     ];
 }

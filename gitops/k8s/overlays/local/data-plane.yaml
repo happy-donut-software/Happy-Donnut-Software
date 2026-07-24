@@ -1,0 +1,367 @@
+apiVersion: v1
+kind: Service
+metadata: {name: bd-ventas}
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: bd-ventas}
+  ports: [{name: postgres, port: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: bd-ventas}
+spec:
+  serviceName: bd-ventas
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: bd-ventas}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: bd-ventas, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: ventas_db}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_USERNAME}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_PASSWORD}}
+          readinessProbe: {exec: {command: [sh, -c, "pg_isready -U $POSTGRES_USER -d ventas_db"]}, initialDelaySeconds: 5, periodSeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 300m, memory: 384Mi}
+          volumeMounts: [{name: datos, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates:
+    - metadata: {name: datos}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: bd-inventario}
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: bd-inventario}
+  ports: [{name: postgres, port: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: bd-inventario}
+spec:
+  serviceName: bd-inventario
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: bd-inventario}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: bd-inventario, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: inventario_db}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_USERNAME}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_PASSWORD}}
+          readinessProbe: {exec: {command: [sh, -c, "pg_isready -U $POSTGRES_USER -d inventario_db"]}, initialDelaySeconds: 5, periodSeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 300m, memory: 384Mi}
+          volumeMounts: [{name: datos, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates:
+    - metadata: {name: datos}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: bd-usuarios}
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: bd-usuarios}
+  ports: [{name: postgres, port: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: bd-usuarios}
+spec:
+  serviceName: bd-usuarios
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: bd-usuarios}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: bd-usuarios, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: usuarios_db}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_USERNAME}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_PASSWORD}}
+          readinessProbe: {exec: {command: [sh, -c, "pg_isready -U $POSTGRES_USER -d usuarios_db"]}, initialDelaySeconds: 5, periodSeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 300m, memory: 384Mi}
+          volumeMounts: [{name: datos, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates:
+    - metadata: {name: datos}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: bd-finanzas}
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: bd-finanzas}
+  ports: [{name: postgres, port: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: bd-finanzas}
+spec:
+  serviceName: bd-finanzas
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: bd-finanzas}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: bd-finanzas, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: finanzas_db}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_USERNAME}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_PASSWORD}}
+          readinessProbe: {exec: {command: [sh, -c, "pg_isready -U $POSTGRES_USER -d finanzas_db"]}, initialDelaySeconds: 5, periodSeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 300m, memory: 384Mi}
+          volumeMounts: [{name: datos, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates:
+    - metadata: {name: datos}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 1Gi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: bd-tienda-virtual}
+spec:
+  clusterIP: None
+  selector: {app.kubernetes.io/name: bd-tienda-virtual}
+  ports: [{name: postgres, port: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: bd-tienda-virtual}
+spec:
+  serviceName: bd-tienda-virtual
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: bd-tienda-virtual}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: bd-tienda-virtual, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports: [{name: postgres, containerPort: 5432}]
+          env:
+            - {name: POSTGRES_DB, value: tienda_virtual_db}
+            - name: POSTGRES_USER
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_USERNAME}}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: DB_PASSWORD}}
+          readinessProbe: {exec: {command: [sh, -c, "pg_isready -U $POSTGRES_USER -d tienda_virtual_db"]}, initialDelaySeconds: 5, periodSeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+            limits: {cpu: 300m, memory: 384Mi}
+          volumeMounts: [{name: datos, mountPath: /var/lib/postgresql/data}]
+  volumeClaimTemplates:
+    - metadata: {name: datos}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 1Gi}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: rabbitmq}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: rabbitmq}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: rabbitmq, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3-management-alpine
+          ports: [{name: amqp, containerPort: 5672}, {name: management, containerPort: 15672}]
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: RABBITMQ_USER}}
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom: {secretKeyRef: {name: happy-donut-secrets, key: RABBITMQ_PASSWORD}}
+          readinessProbe: {exec: {command: [rabbitmq-diagnostics, -q, ping]}, initialDelaySeconds: 30, timeoutSeconds: 10, periodSeconds: 10, failureThreshold: 6}
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: 500m, memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: rabbitmq}
+spec:
+  type: NodePort
+  selector: {app.kubernetes.io/name: rabbitmq}
+  ports: [{name: amqp, port: 5672}, {name: management, port: 15672, nodePort: 31672}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: redis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: redis}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: redis, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: [redis-server, --appendonly, "yes"]
+          ports: [{name: redis, containerPort: 6379}]
+          readinessProbe: {exec: {command: [redis-cli, ping]}, initialDelaySeconds: 5, periodSeconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 200m, memory: 256Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: redis}
+spec:
+  selector: {app.kubernetes.io/name: redis}
+  ports: [{name: redis, port: 6379}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: frontend-clientes}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: frontend-clientes}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: frontend-clientes, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: web
+          image: happy-donut/frontend-clientes:local
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /, port: http}, initialDelaySeconds: 5, periodSeconds: 10}
+          resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 200m, memory: 192Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: frontend-clientes}
+spec:
+  selector: {app.kubernetes.io/name: frontend-clientes}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: frontend-administrativo}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: frontend-administrativo}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: frontend-administrativo, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: web
+          image: happy-donut/frontend-administrativo:local
+          imagePullPolicy: IfNotPresent
+          ports: [{name: http, containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /admin/, port: http}, initialDelaySeconds: 5, periodSeconds: 10}
+          resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 200m, memory: 192Mi}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: frontend-administrativo}
+spec:
+  selector: {app.kubernetes.io/name: frontend-administrativo}
+  ports: [{name: http, port: 80, targetPort: http}]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: happy-donut-gateway}
+data:
+  default.conf: |
+    server {
+      listen 8080;
+      server_name _;
+      location /api/ventas/ { proxy_pass http://servicio-ventas; proxy_set_header Host $host; }
+      location /api/inventario/ { proxy_pass http://servicio-inventario; proxy_set_header Host $host; }
+      location /api/usuarios/ { proxy_pass http://servicio-usuarios; proxy_set_header Host $host; }
+      location /api/finanzas/ { proxy_pass http://servicio-finanzas; proxy_set_header Host $host; }
+      location /api/tienda/ { proxy_pass http://servicio-tienda-virtual; proxy_set_header Host $host; }
+      location /admin/ { proxy_pass http://frontend-administrativo; proxy_set_header Host $host; }
+      location / { proxy_pass http://frontend-clientes; proxy_set_header Host $host; }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: happy-donut-gateway}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: happy-donut-gateway}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: happy-donut-gateway, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.27-alpine
+          ports: [{name: http, containerPort: 8080}]
+          command: ["nginx", "-g", "daemon off;"]
+          volumeMounts: [{name: config, mountPath: /etc/nginx/conf.d/default.conf, subPath: default.conf, readOnly: true}]
+          readinessProbe: {httpGet: {path: /, port: http}, initialDelaySeconds: 5, periodSeconds: 10}
+          resources: {requests: {cpu: 50m, memory: 32Mi}, limits: {cpu: 200m, memory: 128Mi}}
+          securityContext: {runAsNonRoot: true, runAsUser: 101, runAsGroup: 101, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+      volumes: [{name: config, configMap: {name: happy-donut-gateway}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: happy-donut-gateway}
+spec:
+  type: NodePort
+  selector: {app.kubernetes.io/name: happy-donut-gateway}
+  ports: [{name: http, port: 80, targetPort: http, nodePort: 30080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: ventas-outbox-worker}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app.kubernetes.io/name: ventas-outbox-worker}}
+  template:
+    metadata: {labels: {app.kubernetes.io/name: ventas-outbox-worker, app.kubernetes.io/part-of: happy-donut}}
+    spec:
+      containers:
+        - name: worker
+          image: happy-donut/ventas:local
+          imagePullPolicy: IfNotPresent
+          command: ["php", "artisan", "ventas:publicar-eventos", "--continuo"]
+          envFrom: [{configMapRef: {name: happy-donut-config}}, {secretRef: {name: happy-donut-secrets}}]
+          env:
+            - {name: DB_HOST, value: bd-ventas}
+            - {name: DB_DATABASE, value: ventas_db}
+            - {name: SERVICE_NAME, value: ventas-outbox-worker}
+            - {name: OTEL_SERVICE_NAME, value: ventas-outbox-worker}
+          resources: {requests: {cpu: 50m, memory: 128Mi}, limits: {cpu: 300m, memory: 384Mi}}
+          securityContext: {runAsNonRoot: true, runAsUser: 101, runAsGroup: 101, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('total', 10, 2);
             $table->decimal('monto_recibido', 10, 2)->nullable(); // Para el cálculo del vuelto
             $table->decimal('vuelto', 10, 2)->nullable(); // Para el cálculo del vuelto
+            $table->string('metodo_pago')->nullable(); // EFECTIVO, YAPE, PLIN
             $table->timestamps();
         });
 

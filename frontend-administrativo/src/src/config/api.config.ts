@@ -22,9 +22,10 @@ export const API_CONFIG = {
    */
   services: {
     usuarios:   isDev ? 'http://localhost:9002/api' : `${PROD_DOMAIN}/api`,
-    ventas:     isDev ? 'http://localhost:9003/api' : `${PROD_DOMAIN}/api`,
-    inventario: isDev ? 'http://localhost:9004/api' : `${PROD_DOMAIN}/api`,
-    tienda:     isDev ? 'http://localhost:9005/api' : `${PROD_DOMAIN}/api`,
+    ventas:     isDev ? 'http://localhost:9000/api' : `${PROD_DOMAIN}/api`,
+    inventario: isDev ? 'http://localhost:9001/api' : `${PROD_DOMAIN}/api`,
+    finanzas:   isDev ? 'http://localhost:9003/api' : `${PROD_DOMAIN}/api`,
+    tienda:     isDev ? 'http://localhost:9004/api' : `${PROD_DOMAIN}/api`,
   },
 
   /**
@@ -46,9 +47,16 @@ export const API_CONFIG = {
 
     // Ventas (Microservicio Ventas)
     ventas: {
+      productos: '/ventas/productos',
+      ordenes: '/ventas/ordenes',
+      pagar: '/ventas/ordenes/:id/pagar',
       comprobantes: '/ventas/comprobantes',
       comprobante: '/ventas/comprobantes/:id',
       generarNumero: '/ventas/comprobantes/generar-numero',
+    },
+
+    clientes: {
+      frecuentes: '/usuarios/clientes-frecuentes',
     },
 
     // Inventario (Microservicio Inventario)
@@ -67,10 +75,10 @@ export const API_CONFIG = {
 
     // Caja y Finanzas (Microservicio Finanzas)
     caja: {
-      apertura: '/caja/apertura',
-      cierre: '/caja/cierre',
-      estado: '/caja/estado',
-      movimientos: '/caja/movimientos',
+      apertura: '/finanzas/caja/abrir',
+      cierre: '/finanzas/caja/cerrar',
+      rus: '/finanzas/rus/:periodo',
+      movimientos: '/finanzas/caja/movimiento',
     },
     
     // (Puedes agregar aquí los demás endpoints que tenías: promociones, configuración, etc.)
