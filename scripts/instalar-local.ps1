@@ -77,8 +77,8 @@ Invoke-Checked kubectl @('rollout','status','deployment/ventas-outbox-worker','-
 & (Join-Path $PSScriptRoot 'paneles-local.ps1')
 Invoke-Checked kubectl @('apply','-f','observability/service-monitors.yaml')
 Invoke-Checked kubectl @('apply','-f','observability/prometheus-rules.yaml','-n','happy-donut')
-$dashboard = & kubectl create configmap happy-donut-sre-dashboard -n observability --from-file=happy-donut-sre.json=observability/grafana/dashboards/happy-donut-sre.json --dry-run=client -o yaml
-$dashboard | & kubectl apply -f -
+Invoke-Checked kubectl @('delete','configmap','happy-donut-sre-dashboard','-n','observability','--ignore-not-found')
+Invoke-Checked kubectl @('create','configmap','happy-donut-sre-dashboard','-n','observability','--from-file=happy-donut-sre.json=observability/grafana/dashboards/happy-donut-sre.json')
 Invoke-Checked kubectl @('label','configmap','happy-donut-sre-dashboard','-n','observability','grafana_dashboard=1','--overwrite')
 Invoke-Checked docker @('run','--rm','-e','BASE_URL=http://host.docker.internal:30080','-v',"${Repo}:/workspace",'-v','/workspace/qa-e2e/node_modules','-w','/workspace/qa-e2e','node:22-alpine','sh','-lc','npm install --ignore-scripts && npm test')
 $dirty = git status --porcelain
