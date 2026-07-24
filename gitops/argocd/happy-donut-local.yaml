@@ -8,7 +8,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/happy-donut-software/Happy-Donnut-Software.git
-    targetRevision: develop
+    targetRevision: develop3
     path: gitops/k8s/overlays/local
   destination:
     server: https://kubernetes.default.svc

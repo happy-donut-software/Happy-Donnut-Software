@@ -12,18 +12,28 @@ class EloquentProductoVentaRepository implements ProductoVentaRepositoryInterfac
 {
     public function listarActivos(): array
     {
-        return ProductoVentaModel::where('activo', true)->orderBy('nombre')->get()
-            ->map(fn ($producto) => $this->aDominio($producto))->all();
+        return ProductoVentaModel::with('categoria')->where('activo', true)->orderBy('nombre')->get()
+            ->map(fn (ProductoVentaModel $producto) => $this->aDominio($producto))->all();
     }
 
     public function buscarActivoPorId(string $id): ?ProductoVenta
     {
-        $modelo = ProductoVentaModel::whereKey($id)->where('activo', true)->first();
+        $modelo = ProductoVentaModel::with('categoria')->whereKey($id)->where('activo', true)->first();
         return $modelo ? $this->aDominio($modelo) : null;
     }
 
     private function aDominio(ProductoVentaModel $modelo): ProductoVenta
     {
-        return new ProductoVenta($modelo->id, $modelo->nombre, (float) $modelo->precio, (bool) $modelo->activo);
+        return new ProductoVenta(
+            $modelo->id,
+            $modelo->nombre,
+            (float) $modelo->precio,
+            (bool) $modelo->activo,
+            $modelo->categoria_id ? (int) $modelo->categoria_id : null,
+            $modelo->categoria?->nombre,
+            $modelo->categoria?->slug,
+            $modelo->descripcion,
+            $modelo->imagen_url,
+        );
     }
 }

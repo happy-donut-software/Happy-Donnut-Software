@@ -97,4 +97,18 @@ class InventarioApiTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_crud_de_producto_de_inventario(): void
+    {
+        $this->postJson('/api/inventario/productos', [
+            'id' => 'prod_nueva', 'nombre' => 'Dona Nueva', 'stock_disponible' => 12, 'stock_minimo' => 3,
+        ])->assertCreated()->assertJsonPath('producto.stock_disponible', 12);
+
+        $this->getJson('/api/inventario/productos')->assertOk()->assertJsonFragment(['id' => 'prod_nueva']);
+        $this->putJson('/api/inventario/productos/prod_nueva', [
+            'nombre' => 'Dona Nueva', 'stock_disponible' => 8, 'stock_minimo' => 2,
+        ])->assertOk()->assertJsonPath('producto.stock_disponible', 8);
+        $this->deleteJson('/api/inventario/productos/prod_nueva')->assertOk();
+        $this->assertDatabaseMissing('productos_inventario', ['id' => 'prod_nueva']);
+    }
 }

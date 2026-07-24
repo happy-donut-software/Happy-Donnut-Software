@@ -2,7 +2,7 @@
 
 Sistema local de ventas y comercio electrónico basado en cinco bounded contexts: Ventas, Inventario, Finanzas, Usuarios y Tienda Virtual. Incluye Laravel, React, PostgreSQL por servicio, transactional outbox, consumidores idempotentes, Kubernetes, Argo CD, Prometheus, Grafana, Tempo, OpenTelemetry y Chaos Mesh.
 
-## Inicio rápido en Docker Desktop Kubernetes
+## Inicio rápido en Kubernetes local
 
 Requisitos: Docker Desktop abierto, Kubernetes habilitado, PowerShell 7, `kubectl` y `helm`. Se recomiendan 8 GB de RAM disponibles.
 
@@ -25,24 +25,25 @@ El instalador fija versiones de charts, construye siete imágenes locales, crea 
 | Usuario administrador | `admin@happydonut.local / Admin123!` |
 | Usuario cajero | `cajero@happydonut.local / Cajero123!` |
 
-Para habilitar reconciliación GitOps local, primero confirma y publica los cambios en `develop`, y después ejecuta:
+La aplicación GitOps apunta a `develop3`. Con el repositorio limpio y publicado, el instalador registra automáticamente la aplicación en Argo CD. Para repetir sin reconstruir imágenes:
 
 ```powershell
-.\scripts\instalar-local.ps1 -OmitirBuild -ActivarArgo
+.\scripts\instalar-local.ps1 -OmitirBuild
 ```
 
-Argo CD solo puede leer lo que ya existe en GitHub; por eso el instalador no afirma sincronización mientras el árbol local tenga cambios sin publicar.
+Argo CD solo puede leer lo que ya existe en GitHub; por eso el instalador omite el registro GitOps cuando el árbol local tiene cambios sin publicar. En clústeres `kind`, las imágenes se cargan automáticamente y `paneles-local.ps1` abre los port-forward necesarios.
 
 ## Flujo funcional implementado
 
-1. El catálogo se consulta en `GET /api/ventas/productos`.
-2. El POS o portal crea la orden en `POST /api/ventas/ordenes`.
-3. El pago admite `EFECTIVO`, `YAPE` o `PLIN`, calcula vuelto y genera `BOLETA` o `NOTA_PEDIDO`.
-4. Pago y evento `VentaFinalizada.v1` se guardan atómicamente en la outbox.
-5. El relay reintenta la entrega autenticada a Inventario y Finanzas.
-6. Inventario descuenta stock idempotentemente y señala mínimos.
-7. Finanzas registra el ingreso en la caja abierta; solo las boletas incrementan el acumulado RUS.
-8. Prometheus recoge métricas HTTP y OpenTelemetry exporta trazas a Tempo.
+1. La categoría `Donas` se crea por defecto; Administración gestiona categorías, productos y stock mediante las APIs de Ventas e Inventario.
+2. El portal de clientes consulta el mismo catálogo en `GET /api/ventas/productos` y refleja los cambios del panel administrativo.
+3. El POS o portal crea la orden en `POST /api/ventas/ordenes`.
+4. El pago admite `EFECTIVO`, `YAPE` o `PLIN`, calcula vuelto y genera `BOLETA` o `NOTA_PEDIDO`.
+5. Pago y evento `VentaFinalizada.v1` se guardan atómicamente en la outbox.
+6. El relay reintenta la entrega autenticada a Inventario y Finanzas.
+7. Inventario descuenta stock idempotentemente y señala mínimos.
+8. Finanzas registra el ingreso en la caja abierta; solo las boletas incrementan el acumulado RUS.
+9. Prometheus recoge métricas HTTP y OpenTelemetry exporta trazas a Tempo.
 
 ## Evidencia y documentación
 

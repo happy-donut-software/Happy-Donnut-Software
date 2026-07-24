@@ -54,7 +54,7 @@ class RegistrarMetricas
             '# HELP http_requests_total Solicitudes HTTP procesadas.',
             '# TYPE http_requests_total counter',
         ];
-        foreach (($datos['solicitudes'] ?? []) as $estado => $cantidad) {
+        foreach (array_replace(['200' => 0, '500' => 0], $datos['solicitudes'] ?? []) as $estado => $cantidad) {
             $lineas[] = sprintf('http_requests_total{service="%s",status="%s"} %d', $servicio, $estado, $cantidad);
         }
         $lineas[] = '# HELP http_request_duration_seconds Duracion de solicitudes HTTP.';

@@ -2,13 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: servicio-ventas
-  labels: {app.kubernetes.io/name: servicio-ventas, app.kubernetes.io/part-of: happy-donut}
+  labels: {app.kubernetes.io/name: servicio-ventas, app.kubernetes.io/part-of: happy-donut, observability.happy-donut/metrics: "true"}
 spec:
   replicas: 2
   selector: {matchLabels: {app.kubernetes.io/name: servicio-ventas}}
   template:
     metadata:
-      labels: {app.kubernetes.io/name: servicio-ventas, app.kubernetes.io/part-of: happy-donut}
+      labels: {app.kubernetes.io/name: servicio-ventas, app.kubernetes.io/part-of: happy-donut, observability.happy-donut/metrics: "true"}
     spec:
       securityContext: {runAsNonRoot: true, runAsUser: 82, runAsGroup: 82, seccompProfile: {type: RuntimeDefault}}
       containers:
@@ -38,7 +38,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: servicio-ventas
-  labels: {app.kubernetes.io/name: servicio-ventas, app.kubernetes.io/part-of: happy-donut}
+  labels: {app.kubernetes.io/name: servicio-ventas, app.kubernetes.io/part-of: happy-donut, observability.happy-donut/metrics: "true"}
 spec:
   selector: {app.kubernetes.io/name: servicio-ventas}
   ports: [{name: http, port: 80, targetPort: http}]

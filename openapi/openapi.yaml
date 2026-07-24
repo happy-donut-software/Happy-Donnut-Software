@@ -115,8 +115,64 @@ paths:
     get:
       tags: [Ventas]
       operationId: listarProductosVenta
-      responses:
-        "200": {description: Catalogo de productos vendibles}
+      parameters: [{name: incluir_inactivos, in: query, required: false, schema: {type: boolean}}]
+      responses: {"200": {description: Catalogo de productos vendibles}}
+    post:
+      tags: [Ventas]
+      operationId: crearProductoVenta
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [nombre, categoria_id, precio]}}}}
+      responses: {"201": {description: Producto creado}, "422": {$ref: "#/components/responses/ValidacionInvalida"}}
+  /ventas/productos/{id}:
+    put:
+      tags: [Ventas]
+      operationId: actualizarProductoVenta
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      responses: {"200": {description: Producto actualizado}, "404": {description: Producto inexistente}}
+    delete:
+      tags: [Ventas]
+      operationId: desactivarProductoVenta
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      responses: {"200": {description: Producto desactivado}, "404": {description: Producto inexistente}}
+  /ventas/categorias:
+    get:
+      tags: [Ventas]
+      operationId: listarCategoriasProducto
+      responses: {"200": {description: Categorias activas del catalogo}}
+    post:
+      tags: [Ventas]
+      operationId: crearCategoriaProducto
+      responses: {"201": {description: Categoria creada}, "422": {$ref: "#/components/responses/ValidacionInvalida"}}
+  /ventas/categorias/{id}:
+    put:
+      tags: [Ventas]
+      operationId: actualizarCategoriaProducto
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      responses: {"200": {description: Categoria actualizada}}
+    delete:
+      tags: [Ventas]
+      operationId: eliminarCategoriaProducto
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      responses: {"200": {description: Categoria eliminada}, "409": {description: Categoria con productos activos}}
+  /inventario/productos:
+    get:
+      tags: [Inventario]
+      operationId: listarProductosInventario
+      responses: {"200": {description: Inventario completo}}
+    post:
+      tags: [Inventario]
+      operationId: crearProductoInventario
+      responses: {"201": {description: Producto agregado al inventario}}
+  /inventario/productos/{id}:
+    put:
+      tags: [Inventario]
+      operationId: actualizarProductoInventario
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      responses: {"200": {description: Inventario actualizado}}
+    delete:
+      tags: [Inventario]
+      operationId: eliminarProductoInventario
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      responses: {"200": {description: Producto retirado del inventario}}
   /inventario/stock/{id}:
     get:
       tags: [Inventario]

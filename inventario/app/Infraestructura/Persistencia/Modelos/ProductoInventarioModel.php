@@ -6,24 +6,11 @@ namespace App\Infraestructura\Persistencia\Modelos;
 
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Modelo Eloquent para la tabla productos_inventario.
- */
 class ProductoInventarioModel extends Model
 {
     protected $table = 'productos_inventario';
     public $incrementing = false;
     protected $keyType = 'string';
-
-    protected $fillable = [
-        'id',
-        'nombre',
-        'stock_disponible',
-        'stock_minimo'
-    ];
-
-    protected $casts = [
-        'stock_disponible',
-        'stock_minimo' => 'integer',
-    ];
+    protected $fillable = ['id', 'nombre', 'stock_disponible', 'stock_minimo'];
+    protected $casts = ['stock_disponible' => 'integer', 'stock_minimo' => 'integer'];
 }

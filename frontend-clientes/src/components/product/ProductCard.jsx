@@ -1,25 +1,19 @@
-// src/components/product/ProductCard.jsx
 import React from 'react';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
 import Button from '../ui/Button';
-import { categories } from '../../data/categories';
-
-const getCategoryName = (categoryId) => {
-  const cat = categories.find(c => c.id === categoryId);
-  return cat ? cat.name : '';
-};
 
 export default function ProductCard({ product, addToCart }) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
-        <img 
-          src={product.image} 
+        <img
+          src={product.image}
           alt={product.name}
+          onError={(event) => { event.currentTarget.src = 'https://placehold.co/300x200/ff9a8b/ffffff?text=Happy+Donut'; }}
           className="w-full h-48 object-cover"
         />
         <div className="absolute top-2 right-2">
-          <button className="bg-white rounded-full p-2 hover:bg-gray-100 transition-colors">
+          <button className="bg-white rounded-full p-2 hover:bg-gray-100 transition-colors" aria-label="Agregar a favoritos">
             <Heart size={18} className="text-gray-400" />
           </button>
         </div>
@@ -28,7 +22,7 @@ export default function ProductCard({ product, addToCart }) {
         <div className="flex justify-between items-start mb-2">
           <div>
             <span className="inline-block bg-orange-500 text-white text-xs px-2 py-1 rounded-full mb-2">
-              {getCategoryName(product.category)}
+              {product.categoryName || 'Sin categoría'}
             </span>
             <h3 className="text-xl font-semibold text-gray-800">{product.name}</h3>
             <p className="text-sm text-gray-600 mt-1">{product.description}</p>

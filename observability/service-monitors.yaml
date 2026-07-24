@@ -1,8 +1,16 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
-metadata: {name: happy-donut-servicios, namespace: happy-donut, labels: {release: prometheus}}
+metadata:
+  name: happy-donut-servicios
+  namespace: happy-donut
+  labels: {release: prometheus}
 spec:
   namespaceSelector: {matchNames: [happy-donut]}
-  selector: {matchLabels: {app.kubernetes.io/part-of: happy-donut}}
+  selector:
+    matchLabels:
+      observability.happy-donut/metrics: "true"
   endpoints:
-    - {port: http, path: /api/metrics, interval: 15s, scrapeTimeout: 10s}
+    - port: http
+      path: /api/metrics
+      interval: 15s
+      scrapeTimeout: 10s

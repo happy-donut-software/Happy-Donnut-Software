@@ -1,1 +1,256 @@
-{"annotations":{"list":[]},"editable":true,"panels":[{"type":"stat","title":"Disponibilidad 30d","targets":[{"expr":"1 - (sum(rate(http_requests_total{namespace=\"happy-donut\",status=~\"5..\"}[30d])) / clamp_min(sum(rate(http_requests_total{namespace=\"happy-donut\"}[30d])),1))"}],"gridPos":{"h":8,"w":8,"x":0,"y":0}},{"type":"timeseries","title":"Latencia p95","targets":[{"expr":"histogram_quantile(0.95, sum by (le,service) (rate(http_request_duration_seconds_bucket{namespace=\"happy-donut\"}[5m])))"}],"gridPos":{"h":8,"w":8,"x":8,"y":0}},{"type":"gauge","title":"Presupuesto de error consumido","targets":[{"expr":"(sum(rate(http_requests_total{namespace=\"happy-donut\",status=~\"5..\"}[30d])) / clamp_min(sum(rate(http_requests_total{namespace=\"happy-donut\"}[30d])),1)) / 0.001"}],"gridPos":{"h":8,"w":8,"x":16,"y":0}}],"schemaVersion":39,"tags":["happy-donut","sre"],"templating":{"list":[]},"time":{"from":"now-6h","to":"now"},"title":"Happy Donut - SRE","uid":"happy-donut-sre","version":1}
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "schemaVersion": 39,
+  "tags": [
+    "happy-donut",
+    "sre"
+  ],
+  "title": "Happy Donut - SRE",
+  "uid": "happy-donut-sre",
+  "version": 2,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Disponibilidad (30 días)",
+      "description": "Objetivo SLO: 99.9%",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 99
+              },
+              {
+                "color": "green",
+                "value": 99.9
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "(1 - (sum(rate(http_requests_total{namespace=\"happy-donut\",status=~\"5..\"}[30d])) / clamp_min(sum(rate(http_requests_total{namespace=\"happy-donut\"}[30d])), 1))) * 100",
+          "legendFormat": "Disponibilidad"
+        }
+      ],
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Solicitudes (últimos 5 min)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_requests_total{namespace=\"happy-donut\"}[5m])) or vector(0)",
+          "legendFormat": "Solicitudes"
+        }
+      ],
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Errores HTTP 5xx (5 min)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(http_requests_total{namespace=\"happy-donut\",status=~\"5..\"}[5m])) or vector(0)",
+          "legendFormat": "Errores"
+        }
+      ],
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Eventos pendientes (Outbox)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(happy_donut_outbox_pending{namespace=\"happy-donut\"}) or vector(0)",
+          "legendFormat": "Pendientes"
+        }
+      ],
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Solicitudes por segundo y servicio",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(http_requests_total{namespace=\"happy-donut\"}[5m]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Latencia p95 por servicio",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, service) (rate(http_request_duration_seconds_bucket{namespace=\"happy-donut\"}[5m])))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 7
+      }
+    },
+    {
+      "type": "gauge",
+      "title": "Presupuesto de error consumido (30 días)",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 200,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "((sum(rate(http_requests_total{namespace=\"happy-donut\",status=~\"5..\"}[30d])) / clamp_min(sum(rate(http_requests_total{namespace=\"happy-donut\"}[30d])), 1)) / 0.001) * 100",
+          "legendFormat": "Consumido"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Stock de métricas por servicio",
+      "description": "Confirma que Prometheus recibe datos de los cinco microservicios.",
+      "targets": [
+        {
+          "expr": "count by (service) (http_requests_total{namespace=\"happy-donut\"})",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 8,
+        "y": 16
+      }
+    }
+  ]
+}

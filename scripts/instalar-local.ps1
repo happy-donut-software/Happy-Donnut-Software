@@ -42,6 +42,16 @@ if (-not $OmitirBuild) {
     Invoke-Checked docker @('build','--target','production','-t','happy-donut/frontend-clientes:local','./frontend-clientes')
     Invoke-Checked docker @('build','--target','production','-t','happy-donut/frontend-administrativo:local','./frontend-administrativo')
 }
+$currentContext = (& kubectl config current-context).Trim()
+if (-not $OmitirBuild -and $currentContext.StartsWith('kind-')) {
+    $kindCluster = $currentContext.Substring(5)
+    $localImages = @(
+        'happy-donut/ventas:local','happy-donut/inventario:local','happy-donut/usuarios:local',
+        'happy-donut/finanzas:local','happy-donut/tienda-virtual:local',
+        'happy-donut/frontend-clientes:local','happy-donut/frontend-administrativo:local'
+    )
+    Invoke-Checked kind (@('load','docker-image','--name',$kindCluster) + $localImages)
+}
 Invoke-Checked kubectl @('apply','-k','gitops/k8s/overlays/local')
 foreach ($database in @('ventas','inventario','usuarios','finanzas','tienda-virtual')) { Invoke-Checked kubectl @('rollout','status',"statefulset/bd-$database",'-n','happy-donut','--timeout=10m') }
 Invoke-Checked kubectl @('rollout','status','deployment/rabbitmq','-n','happy-donut','--timeout=10m')
@@ -55,16 +65,15 @@ Invoke-Checked kubectl @('rollout','status','deployment/frontend-clientes','-n',
 Invoke-Checked kubectl @('rollout','status','deployment/frontend-administrativo','-n','happy-donut','--timeout=10m')
 Invoke-Checked kubectl @('rollout','status','deployment/happy-donut-gateway','-n','happy-donut','--timeout=10m')
 Invoke-Checked kubectl @('rollout','status','deployment/ventas-outbox-worker','-n','happy-donut','--timeout=10m')
+& (Join-Path $PSScriptRoot 'paneles-local.ps1')
 Invoke-Checked kubectl @('apply','-f','observability/service-monitors.yaml')
 Invoke-Checked kubectl @('apply','-f','observability/prometheus-rules.yaml','-n','happy-donut')
 $dashboard = & kubectl create configmap happy-donut-sre-dashboard -n observability --from-file=happy-donut-sre.json=observability/grafana/dashboards/happy-donut-sre.json --dry-run=client -o yaml
 $dashboard | & kubectl apply -f -
 Invoke-Checked kubectl @('label','configmap','happy-donut-sre-dashboard','-n','observability','grafana_dashboard=1','--overwrite')
 Invoke-Checked docker @('run','--rm','-e','BASE_URL=http://host.docker.internal:30080','-v',"${Repo}:/workspace",'-v','/workspace/qa-e2e/node_modules','-w','/workspace/qa-e2e','node:22-alpine','sh','-lc','npm install --ignore-scripts && npm test')
-if ($ActivarArgo) {
-    $dirty = git status --porcelain
-    if ($dirty) { Write-Warning 'Argo CD requiere que estos cambios esten en GitHub. Haz commit/push a develop y repite con -ActivarArgo.' }
-    else { Invoke-Checked kubectl @('apply','-f','gitops/argocd/happy-donut-local.yaml') }
-}
+$dirty = git status --porcelain
+if ($dirty) { Write-Warning 'Argo CD se omitio porque hay cambios locales sin publicar. Haz commit/push a develop3 y vuelve a ejecutar el instalador.' }
+else { Invoke-Checked kubectl @('apply','-f','gitops/argocd/happy-donut-local.yaml') }
 Write-Host "`nInstalacion terminada." -ForegroundColor Green
 Write-Host 'Ejecuta scripts/paneles-local.ps1 y despues scripts/verificar-local.ps1.'
