@@ -108,4 +108,28 @@ class TurnoCajaApiTest extends TestCase
         $response->assertStatus(400)
             ->assertJson(['error' => 'No hay ningún turno de caja abierto para cerrar.']);
     }
+    public function test_consulta_estado_y_movimientos_del_turno_actual(): void
+    {
+        $this->getJson('/api/finanzas/caja/actual')
+            ->assertOk()
+            ->assertJson(['abierto' => false, 'turno' => null]);
+
+        $this->postJson('/api/finanzas/caja/abrir', [
+            'cajero_id' => 'usr_cajero_01',
+            'monto_apertura' => 80,
+        ])->assertCreated();
+        $this->postJson('/api/finanzas/caja/movimiento', [
+            'monto' => 20,
+            'tipo_movimiento' => 'venta',
+            'descripcion' => 'Venta de prueba',
+        ])->assertCreated();
+
+        $this->getJson('/api/finanzas/caja/actual')
+            ->assertOk()
+            ->assertJsonPath('abierto', true)
+            ->assertJsonPath('turno.monto_apertura', 80)
+            ->assertJsonPath('turno.saldo_esperado', 100)
+            ->assertJsonPath('turno.movimientos.0.tipo', 'venta');
+    }
+
 }

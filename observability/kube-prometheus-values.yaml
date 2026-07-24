@@ -3,6 +3,9 @@ grafana:
     type: NodePort
     nodePort: 30300
   adminPassword: happy-donut-local
+  grafana.ini:
+    dashboards:
+      default_home_dashboard_path: /tmp/dashboards/happy-donut-sre.json
   sidecar:
     dashboards:
       enabled: true

@@ -14,6 +14,7 @@ use App\Http\Controllers\RusController;
 */
 
 Route::prefix('finanzas/caja')->group(function () {
+    Route::get('/actual', [TurnoCajaController::class, 'actual']);
     Route::post('/abrir', [TurnoCajaController::class, 'abrir']);
     Route::post('/movimiento', [TurnoCajaController::class, 'registrarMovimiento']);
     Route::post('/cerrar', [TurnoCajaController::class, 'cerrar']);

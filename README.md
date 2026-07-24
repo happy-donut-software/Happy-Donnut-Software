@@ -20,7 +20,7 @@ El instalador fija versiones de charts, construye siete imágenes locales, crea 
 | Portal clientes | http://localhost:30080 |
 | Administración / POS | http://localhost:30080/admin/ |
 | Argo CD | NodePort libre mostrado por paneles-local.ps1 - usuario `admin`; contraseña mostrada por `paneles-local.ps1` |
-| Grafana | http://localhost:30300 - `admin / happy-donut-local` |
+| Grafana SRE | http://localhost:30300/d/happy-donut-sre/happy-donut-sre - `admin / happy-donut-local` |
 | RabbitMQ | http://localhost:31672 - `happy_donut / happy_donut_local` |
 | Usuario administrador | `admin@happydonut.local / Admin123!` |
 | Usuario cajero | `cajero@happydonut.local / Cajero123!` |
@@ -37,13 +37,14 @@ Argo CD solo puede leer lo que ya existe en GitHub; por eso el instalador omite 
 
 1. La categoría `Donas` se crea por defecto; Administración gestiona categorías, productos y stock mediante las APIs de Ventas e Inventario.
 2. El portal de clientes consulta el mismo catálogo en `GET /api/ventas/productos` y refleja los cambios del panel administrativo.
-3. El POS o portal crea la orden en `POST /api/ventas/ordenes`.
-4. El pago admite `EFECTIVO`, `YAPE` o `PLIN`, calcula vuelto y genera `BOLETA` o `NOTA_PEDIDO`.
-5. Pago y evento `VentaFinalizada.v1` se guardan atómicamente en la outbox.
-6. El relay reintenta la entrega autenticada a Inventario y Finanzas.
-7. Inventario descuenta stock idempotentemente y señala mínimos.
-8. Finanzas registra el ingreso en la caja abierta; solo las boletas incrementan el acumulado RUS.
-9. Prometheus recoge métricas HTTP y OpenTelemetry exporta trazas a Tempo.
+3. Administración debe abrir un turno real mediante `POST /api/finanzas/caja/abrir`; con caja cerrada los pagos se rechazan.
+4. El POS o portal crea la orden en `POST /api/ventas/ordenes`.
+5. El pago admite `EFECTIVO`, `YAPE` o `PLIN`, calcula vuelto y genera `BOLETA` o `NOTA_PEDIDO`.
+6. Pago y evento `VentaFinalizada.v1` se guardan atómicamente en la outbox.
+7. El relay reintenta la entrega autenticada a Inventario y Finanzas.
+8. Inventario descuenta stock idempotentemente y señala mínimos.
+9. Finanzas registra el ingreso en la caja abierta; solo las boletas incrementan el acumulado RUS.
+10. Prometheus recoge métricas HTTP y OpenTelemetry exporta trazas a Tempo.
 
 ## Evidencia y documentación
 

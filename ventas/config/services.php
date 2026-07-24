@@ -14,6 +14,10 @@ return [
     |
     */
 
+    'finanzas' => [
+        'caja_estado_url' => env('FINANZAS_CAJA_ESTADO_URL', 'http://servicio-finanzas/api/finanzas/caja/actual'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

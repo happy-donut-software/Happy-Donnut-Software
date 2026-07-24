@@ -1,228 +1,47 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { ShoppingCart, Coins, FileText, Wallet, TrendingUp, Clock } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "../ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Coins, FileText, ShoppingCart, TrendingUp, Wallet } from "lucide-react";
+import { obtenerCajaActual } from "../../services/cajaService";
 
-const salesData = [
-  { name: "Lun", ventas: 0 },
-  { name: "Mar", ventas: 0 },
-  { name: "Mié", ventas: 0 },
-  { name: "Jue", ventas: 0 },
-  { name: "Vie", ventas: 0 },
-  { name: "Sáb", ventas: 0 },
-  { name: "Dom", ventas: 0 },
-];
-
-const productData = [
-  { name: "Sin datos", cantidad: 0 },
-];
-
-// Simular datos de caja (esto debería venir de un contexto global o localStorage)
-const getCajaStatus = () => {
-  // Aquí verificamos si hay una caja abierta en el sistema
-  const cajaAbierta = localStorage.getItem("cajaAbierta");
-  return cajaAbierta === "true";
-};
-
-// Simular producto más vendido (esto debería calcularse desde las ventas reales)
-const getProductoMasVendido = () => {
-  // Por ahora retornamos un mensaje por defecto
-  return {
-    nombre: "Sin ventas hoy",
-    cantidad: 0
-  };
-};
-
-// Obtener total de ventas del día
-const getVentasDelDia = () => {
-  // Esto debería calcularse desde los comprobantes del día
-  return {
-    total: 0,
-    cantidad: 0
-  };
-};
+type OrdenResumen = { id: string; fecha_creacion: string; estado: string; total: number; lineas: Array<{ nombre_producto: string; cantidad: number }> };
 
 export function Dashboard() {
-  const cajaAbierta = getCajaStatus();
-  const productoMasVendido = getProductoMasVendido();
-  const ventasDelDia = getVentasDelDia();
+  const [ordenes, setOrdenes] = useState<OrdenResumen[]>([]);
+  const [cajaAbierta, setCajaAbierta] = useState(false);
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1>Dashboard</h1>
-        <p className="text-muted-foreground">Resumen general del negocio</p>
-      </div>
+  useEffect(() => {
+    void Promise.all([
+      fetch("/api/ventas/ordenes?estado=pagada", { headers: { Accept: "application/json" } }).then((response) => response.json()),
+      obtenerCajaActual(),
+    ]).then(([ventas, caja]) => {
+      setOrdenes(ventas.ordenes || []);
+      setCajaAbierta(caja.abierto);
+    }).catch(() => { setOrdenes([]); setCajaAbierta(false); });
+  }, []);
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Ventas del Día</CardTitle>
-            <Coins className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">S/ {ventasDelDia.total.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">{ventasDelDia.cantidad} comprobantes</p>
-          </CardContent>
-        </Card>
+  const hoy = new Date().toISOString().slice(0, 10);
+  const ventasHoy = ordenes.filter((orden) => orden.fecha_creacion?.slice(0, 10) === hoy);
+  const totalHoy = ventasHoy.reduce((total, orden) => total + Number(orden.total), 0);
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Comprobantes Emitidos</CardTitle>
-            <FileText className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl">{ventasDelDia.cantidad}</div>
-            <p className="text-xs text-muted-foreground">Hoy</p>
-          </CardContent>
-        </Card>
+  const productos = useMemo(() => {
+    const conteo = new Map<string, number>();
+    ventasHoy.flatMap((orden) => orden.lineas).forEach((linea) => conteo.set(linea.nombre_producto, (conteo.get(linea.nombre_producto) || 0) + Number(linea.cantidad)));
+    return Array.from(conteo, ([name, cantidad]) => ({ name, cantidad })).sort((a, b) => b.cantidad - a.cantidad).slice(0, 6);
+  }, [ventasHoy]);
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Producto Más Vendido Hoy</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg truncate">{productoMasVendido.nombre}</div>
-            <p className="text-xs text-muted-foreground">
-              {productoMasVendido.cantidad > 0 ? `${productoMasVendido.cantidad} unidades` : "Sin ventas"}
-            </p>
-          </CardContent>
-        </Card>
+  const masVendido = productos[0];
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm">Caja del Día</CardTitle>
-            <Wallet className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <Badge 
-                variant={cajaAbierta ? "default" : "secondary"}
-                className={cajaAbierta ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 hover:bg-gray-600"}
-              >
-                {cajaAbierta ? "ABIERTA" : "CERRADA"}
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {cajaAbierta ? "Operando normalmente" : "Debe abrir caja para operar"}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Ventas de la Semana</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => [`S/ ${value}`, "Ventas"]}
-                  contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ccc' }}
-                />
-                <Line type="monotone" dataKey="ventas" stroke="#ff8c00" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              💡 Los datos se actualizarán automáticamente con las ventas registradas
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Productos Más Vendidos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={productData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value) => [`${value} unidades`, "Vendido"]}
-                  contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', border: '1px solid #ccc' }}
-                />
-                <Bar dataKey="cantidad" fill="#ffd700" />
-              </BarChart>
-            </ResponsiveContainer>
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              💡 Los datos se actualizarán automáticamente con las ventas registradas
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Actividad Reciente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-              <Clock className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg mb-2">No hay actividad reciente</h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Las acciones realizadas en el sistema (ventas, compras, movimientos de inventario) aparecerán aquí automáticamente.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Información del Sistema */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🍩</span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Régimen Tributario</p>
-                <p className="font-medium">RUS</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tipo de Comprobante</p>
-                <p className="font-medium">Boletas de Venta</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <ShoppingCart className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Sistema de Pago</p>
-                <p className="font-medium">Efectivo, YAPE, PLIN</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+  return <div className="space-y-6">
+    <div><h1>Dashboard</h1><p className="text-muted-foreground">Resumen real de Ventas y Finanzas.</p></div>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm">Ventas del Día</CardTitle><Coins className="h-4 w-4 text-primary"/></CardHeader><CardContent><div className="text-2xl">S/ {totalHoy.toFixed(2)}</div><p className="text-xs text-muted-foreground">{ventasHoy.length} comprobantes</p></CardContent></Card>
+      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm">Comprobantes Emitidos</CardTitle><FileText className="h-4 w-4 text-primary"/></CardHeader><CardContent><div className="text-2xl">{ordenes.length}</div><p className="text-xs text-muted-foreground">Histórico disponible</p></CardContent></Card>
+      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm">Producto Más Vendido Hoy</CardTitle><TrendingUp className="h-4 w-4 text-primary"/></CardHeader><CardContent><div className="truncate text-lg">{masVendido?.name || "Sin ventas hoy"}</div><p className="text-xs text-muted-foreground">{masVendido ? masVendido.cantidad + " unidades" : "Sin ventas"}</p></CardContent></Card>
+      <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm">Caja</CardTitle><Wallet className="h-4 w-4 text-primary"/></CardHeader><CardContent><Badge className={cajaAbierta ? "bg-green-600" : "bg-gray-500"}>{cajaAbierta ? "ABIERTA" : "CERRADA"}</Badge><p className="mt-2 text-xs text-muted-foreground">{cajaAbierta ? "Cobros habilitados" : "Ventas bloqueadas"}</p></CardContent></Card>
     </div>
-  );
+    <Card><CardHeader><CardTitle>Productos vendidos hoy</CardTitle></CardHeader><CardContent>{productos.length === 0 ? <div className="py-12 text-center text-muted-foreground"><ShoppingCart className="mx-auto mb-3 h-8 w-8"/>Todavía no hay ventas para mostrar.</div> : <ResponsiveContainer width="100%" height={320}><BarChart data={productos}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="name"/><YAxis allowDecimals={false}/><Tooltip/><Bar dataKey="cantidad" fill="#ff8c00"/></BarChart></ResponsiveContainer>}</CardContent></Card>
+    <Card><CardHeader><CardTitle>Actividad reciente</CardTitle></CardHeader><CardContent className="space-y-2">{ordenes.slice(0, 5).map((orden) => <div key={orden.id} className="flex items-center justify-between rounded-lg border p-3"><div><p className="font-mono text-xs">{orden.id}</p><p className="text-sm text-muted-foreground">{new Date(orden.fecha_creacion).toLocaleString("es-PE")}</p></div><strong>S/ {Number(orden.total).toFixed(2)}</strong></div>)}{ordenes.length === 0 && <p className="py-8 text-center text-muted-foreground">No hay actividad reciente.</p>}</CardContent></Card>
+  </div>;
 }

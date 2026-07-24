@@ -8,6 +8,7 @@ use App\Http\Middleware\RegistrarMetricas;
 use App\Infraestructura\Persistencia\Modelos\EventoDominioModel;
 
 Route::prefix('ventas/ordenes')->group(function (): void {
+    Route::get('/', [OrdenController::class, 'listar']);
     Route::post('/', [OrdenController::class, 'crear']);
     Route::post('/{id}/pagar', [OrdenController::class, 'pagar']);
 });

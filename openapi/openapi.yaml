@@ -16,6 +16,11 @@ tags:
   - {name: Observabilidad}
 paths:
   /ventas/ordenes:
+    get:
+      tags: [Ventas]
+      operationId: listarOrdenes
+      parameters: [{name: estado, in: query, required: false, schema: {type: string, enum: [pendiente, pagada, cancelada]}}]
+      responses: {"200": {description: Órdenes con sus líneas}}
     post:
       tags: [Ventas]
       operationId: crearOrden
@@ -51,6 +56,11 @@ paths:
       operationId: descontarStock
       requestBody: {$ref: "#/components/requestBodies/AjustarStock"}
       responses: {"200": {description: Stock descontado}, "400": {$ref: "#/components/responses/ReglaNegocio"}, "422": {$ref: "#/components/responses/ValidacionInvalida"}}
+  /finanzas/caja/actual:
+    get:
+      tags: [Finanzas]
+      operationId: consultarTurnoActual
+      responses: {"200": {description: Estado, saldo y movimientos del turno abierto}}
   /finanzas/caja/abrir:
     post:
       tags: [Finanzas]

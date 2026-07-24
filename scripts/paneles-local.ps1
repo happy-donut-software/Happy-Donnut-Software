@@ -42,7 +42,7 @@ Write-Host 'Happy Donut local' -ForegroundColor Magenta
 Write-Host 'Aplicacion y API Gateway: http://localhost:30080'
 Write-Host 'Administracion: http://localhost:30080/admin/'
 Write-Host "Argo CD: http://localhost:$argoPort (usuario admin)"
-Write-Host 'Grafana: http://localhost:30300 (admin / happy-donut-local)'
+Write-Host 'Grafana SRE: http://localhost:30300/d/happy-donut-sre/happy-donut-sre (admin / happy-donut-local)'
 Write-Host 'RabbitMQ: http://localhost:31672 (happy_donut / happy_donut_local)'
 Write-Host 'Contrasena inicial de Argo CD:'
 $encoded = (& kubectl -n argocd get secret argocd-initial-admin-secret --ignore-not-found -o jsonpath='{.data.password}')

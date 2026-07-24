@@ -5,6 +5,7 @@ La fuente contractual es `openapi/openapi.yaml` (OpenAPI 3.1). El gateway Kubern
 ## Ventas
 
 - `GET /ventas/productos`
+- `GET /ventas/ordenes?estado=pagada`
 - `POST /ventas/ordenes`
 - `POST /ventas/ordenes/{id}/pagar`
 
@@ -17,6 +18,7 @@ La fuente contractual es `openapi/openapi.yaml` (OpenAPI 3.1). El gateway Kubern
 
 ## Finanzas
 
+- `GET /finanzas/caja/actual`
 - `POST /finanzas/caja/abrir`
 - `POST /finanzas/caja/movimiento`
 - `POST /finanzas/caja/cerrar`

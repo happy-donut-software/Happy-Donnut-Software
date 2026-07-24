@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { Given, When, Then, setDefaultTimeout } = require('@cucumber/cucumber');
+const { After, Given, When, Then, setDefaultTimeout } = require('@cucumber/cucumber');
 setDefaultTimeout(60000);
 const base = process.env.BASE_URL || 'http://localhost:30080';
 async function json(path, options) {
@@ -11,6 +11,14 @@ async function json(path, options) {
 Given('que el ecosistema local de Happy Donut está disponible', async function () {
   const response = await fetch(base + '/api/ventas/productos');
   assert.equal(response.ok, true, 'La API de Ventas no esta disponible');
+  const estadoCaja = await json('/api/finanzas/caja/actual');
+  if (!estadoCaja.abierto) {
+    await json('/api/finanzas/caja/abrir', {
+      method: 'POST', headers: {'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({cajero_id:'qa-e2e',monto_apertura:100}),
+    });
+    this.cajaAbiertaPorPrueba = true;
+  }
 });
 Given('existe un producto de venta con stock', async function () {
   const catalogo = await json('/api/ventas/productos');
@@ -37,4 +45,14 @@ Then('el inventario descuenta la cantidad vendida', async function () {
 Then('Finanzas aumenta el acumulado RUS', async function () {
   for (let i=0;i<20;i++) { const actual=await json(`/api/finanzas/rus/${this.periodo}`); if(Number(actual.acumulado)>Number(this.rusInicial)) return; await new Promise(r=>setTimeout(r,1000)); }
   assert.fail('Finanzas no proceso VentaFinalizada dentro de 20 segundos');
+});
+After(async function () {
+  if (!this.cajaAbiertaPorPrueba) return;
+  const estado = await json('/api/finanzas/caja/actual');
+  if (estado.abierto) {
+    await json('/api/finanzas/caja/cerrar', {
+      method: 'POST', headers: {'Content-Type':'application/json','Accept':'application/json'},
+      body: JSON.stringify({dinero_fisico_real:Number(estado.turno.saldo_esperado)}),
+    });
+  }
 });

@@ -84,6 +84,11 @@ export function NuevoComprobante() {
     setProcesando(true);
     setError("");
     try {
+      const estadoCaja = await fetch('/api/finanzas/caja/actual', { headers: { Accept: 'application/json' } });
+      const caja = await estadoCaja.json().catch(() => ({}));
+      if (!estadoCaja.ok) throw new Error(caja.error || caja.message || 'No se pudo verificar la caja.');
+      if (!caja.abierto) throw new Error('Debe aperturar la caja antes de realizar una venta.');
+
       const crear = await fetch(buildURL(API_CONFIG.services.ventas, API_CONFIG.endpoints.ventas.ordenes), {
         method: "POST",
         headers: API_CONFIG.defaultHeaders,

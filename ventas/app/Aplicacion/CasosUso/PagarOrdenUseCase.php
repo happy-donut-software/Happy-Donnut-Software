@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Aplicacion\CasosUso;
 
+use App\Aplicacion\Puertos\CajaGatewayInterface;
 use App\Dominio\Agregados\OrdenVenta;
 use App\Dominio\Puertos\OrdenRepositoryInterface;
 use DomainException;
@@ -14,12 +15,17 @@ use DomainException;
 class PagarOrdenUseCase
 {
     public function __construct(
-        private readonly OrdenRepositoryInterface $repositorio
+        private readonly OrdenRepositoryInterface $repositorio,
+        private readonly CajaGatewayInterface $caja
     ) {
     }
 
     public function ejecutar(string $ordenId, float $montoRecibido, string $metodoPago = 'EFECTIVO', string $tipoComprobante = 'NOTA_PEDIDO'): OrdenVenta
     {
+        if (!$this->caja->hayTurnoAbierto()) {
+            throw new DomainException('Debe aperturar la caja antes de realizar una venta.');
+        }
+
         // 1. Buscamos la orden
         $orden = $this->repositorio->buscarPorId($ordenId);
 

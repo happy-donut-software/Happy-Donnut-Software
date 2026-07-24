@@ -11,8 +11,19 @@ async function enviar(endpoint, body, token) {
   return data;
 }
 
+async function verificarCajaAbierta() {
+  const response = await fetch(
+    GATEWAY_BASE_URL + '/api/finanzas/caja/actual',
+    { headers: { Accept: 'application/json' } }
+  );
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || data.message || 'No se pudo verificar la caja.');
+  if (!data.abierto) throw new Error('Debe aperturar la caja desde Administración antes de comprar.');
+}
+
 export async function createOrder(items, paymentMethod) {
   try {
+    await verificarCajaAbierta();
     const token = localStorage.getItem('authToken');
     const creada = await enviar('/ventas/ordenes', { items }, token);
     const total = items.reduce((suma, item) => suma + item.precio_unitario * item.cantidad, 0);
